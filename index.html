@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MokedSched</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;
+  --text:#1a1916;--text2:#6b6a65;--text3:#9e9d98;
+  --accent:#2563a8;--accent-light:#e8f0fb;
+  --zvulun:#0d6e4f;--zvulun-light:#e6f4ef;
+  --lin:#8b3a0f;--lin-light:#fdf0e8;
+  --tamra:#a3155e;--tamra-light:#fbe8f0;
+  --kfaryassif:#7a6f0f;--kfaryassif-light:#f7f5e0;
+  --ortho:#5b3fa8;--ortho-light:#eeebfb;
+  --pedia:#b5560a;--pedia-light:#fdf2e5;
+  --internal:#1a6b6b;--internal-light:#e5f4f4;
+  --success:#1a7a4a;--success-light:#e8f6ed;
+  --warn:#c77c0a;--warn-light:#fef6e5;
+  --danger:#b53a3a;--danger-light:#fdeaea;
+  --border:#e2e1da;--radius:10px;--radius-lg:16px;
+}
+body{font-family:'Heebo','DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+body.ltr{font-family:'DM Sans',sans-serif;direction:ltr}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:10px;height:56px;position:sticky;top:0;z-index:50;flex-wrap:nowrap}
+.logo{font-weight:600;font-size:15px;white-space:nowrap}.logo span{color:var(--accent)}
+.divider{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.view-tabs{display:flex;gap:4px;margin-inline-start:auto;flex-shrink:0}
+.tab{padding:6px 11px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);font-weight:500;transition:all .15s;white-space:nowrap}
+.tab:hover{background:var(--surface2)}.tab.active{background:var(--accent);color:#fff}
+.lang-btn{padding:5px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:11px;font-family:inherit;color:var(--text2);font-weight:600;white-space:nowrap;flex-shrink:0}
+.lang-btn:hover{border-color:var(--accent);color:var(--accent)}
+.content{flex:1;padding:14px;max-width:1300px;margin:0 auto;width:100%}
+.panel{display:none;flex-direction:column;gap:12px}.panel.active{display:flex}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+.card-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.btn{padding:7px 13px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover:not(:disabled){background:#1d4f8f}
+.btn-success{background:var(--success-light);color:var(--success)}
+.btn-danger{background:var(--danger-light);color:var(--danger)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-ghost:hover{background:var(--surface2)}
+.btn-warn{background:var(--warn-light);color:var(--warn)}
+.btn-publish{background:linear-gradient(135deg,#1a7a4a,#2563a8);color:#fff;font-weight:600}
+.btn-sm{padding:4px 9px;font-size:12px}
+select,input[type=text],input[type=password],input[type=date],input[type=number]{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)}
+select:focus,input:focus{outline:none;border-color:var(--accent)}
+
+/* ── MOBILE ── */
+@media(max-width:640px){
+  .header{height:auto;min-height:50px;padding:6px 12px;gap:6px;flex-wrap:wrap}
+  .view-tabs{gap:3px}
+  .tab{padding:5px 8px;font-size:11px}
+  .content{padding:8px}
+  .card{padding:12px 14px}
+  .stats-row{grid-template-columns:repeat(2,1fr)!important;gap:8px}
+  .doctor-cols{grid-template-columns:1fr!important}
+  .cal-grid-wrap{gap:2px!important}
+  .cal-day{min-height:56px!important;padding:4px!important}
+  .day-num{font-size:11px!important}
+  .btn{font-size:12px}
+  .req-table{font-size:12px}
+  .req-table th,.req-table td{padding:6px 7px}
+  .admin-inner-tabs,.doc-inner-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}
+  .itab,.ditab{padding:5px 9px;font-size:11px;flex-shrink:0}
+  .toolbar{gap:5px}
+  .toolbar select{font-size:12px;padding:5px 7px;max-width:120px}
+  .modal{padding:18px;width:100%}
+  .modal-btns{flex-direction:column}
+  .modal-btns .btn{width:100%;justify-content:center}
+  .pin-pad{gap:6px}
+  .pin-key{padding:12px;font-size:16px}
+  .avail-card,.swap-req-card,.publish-banner{flex-direction:column;align-items:flex-start}
+  .section-title{font-size:13px}
+  .report-controls{flex-direction:column;align-items:stretch}
+}
+
+/* ── LOGIN ── */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:600;padding:16px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 32px;width:340px;max-width:100%;box-shadow:0 8px 32px rgba(0,0,0,.1);display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.login-box .logo{font-size:20px;font-weight:600}.login-box .logo span{color:var(--accent)}
+.login-step{width:100%;display:flex;flex-direction:column;gap:10px;align-items:center}
+.login-step select{width:100%;font-size:14px;padding:10px 12px}
+.pin-display{display:flex;gap:10px;justify-content:center;margin:4px 0}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--border);transition:background .15s}
+.pin-dot.filled{background:var(--accent)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.pin-key{padding:14px;border:1px solid var(--border);border-radius:var(--radius);font-size:18px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text);transition:all .15s;font-family:inherit;touch-action:manipulation}
+.pin-key:hover,.pin-key:active{background:var(--accent-light);border-color:var(--accent)}
+.pin-key.del{font-size:14px;color:var(--danger)}
+.pin-key.zero{grid-column:2}
+.pin-error{color:var(--danger);font-size:12px;min-height:16px}
+.login-back{font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:inherit}
+
+/* ── DOC BAR ── */
+.doc-bar{background:var(--accent-light);border:1px solid #b3cff5;border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.doc-bar-name{font-size:13px;font-weight:600;color:var(--accent)}
+.doc-bar-btns{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── TABS ── */
+.doc-inner-tabs,.admin-inner-tabs{display:flex;gap:3px;border-bottom:1px solid var(--border);flex-wrap:wrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ditab,.itab{padding:6px 11px;border-radius:8px 8px 0 0;border:none;background:transparent;cursor:pointer;font-size:12px;font-family:inherit;color:var(--text2);font-weight:500;transition:all .15s;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0}
+.ditab:hover,.itab:hover{background:var(--surface2)}
+.ditab.active,.itab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.notif-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-size:10px;font-weight:700;margin-inline-start:3px}
+
+/* ── CALENDAR ── */
+.cal-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cal-grid-wrap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;min-width:280px}
+.cal-header{font-size:10px;font-weight:600;text-align:center;color:var(--text3);padding:4px;text-transform:uppercase}
+.cal-day{border:1px solid var(--border);border-radius:8px;padding:5px;min-height:68px;background:var(--surface);cursor:pointer;transition:all .15s;touch-action:manipulation}
+.cal-day:hover,.cal-day:active{border-color:var(--accent);background:var(--accent-light)}
+.cal-day.empty{background:transparent;border-color:transparent;cursor:default;pointer-events:none}
+.cal-day.past{opacity:.4;cursor:not-allowed;pointer-events:none}
+.cal-day.today{border-color:var(--accent);border-width:2px}
+.cal-day.special{background:#fffbf0;border-color:#e8c84a}
+.day-num{font-size:12px;font-weight:600;margin-bottom:2px}
+.day-label{font-size:8px;color:var(--warn);font-weight:600;text-transform:uppercase;margin-bottom:1px}
+.shifts-list{display:flex;flex-direction:column;gap:2px}
+.shift-chip{font-size:9px;font-weight:500;padding:1px 4px;border-radius:4px;display:inline-block;white-space:nowrap}
+.chip-pending{background:var(--warn-light);color:var(--warn)}
+.chip-approved{background:var(--success-light);color:var(--success)}
+.chip-rejected{background:var(--danger-light);color:var(--danger)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-ortho{background:var(--ortho-light);color:var(--ortho)}
+.badge-pedia{background:var(--pedia-light);color:var(--pedia)}
+.badge-internal{background:var(--internal-light);color:var(--internal)}
+.tag-zvulun{background:var(--zvulun-light);color:var(--zvulun);padding:2px 6px;border-radius:5px;font-size:11px;font-weight:500}
+.tag-lin{background:var(--lin-light);color:var(--lin);padding:2px 6px;border-radius:5px;font-size:11px;font-weight:500}
+.tag-tamra{background:var(--tamra-light);color:var(--tamra);padding:2px 6px;border-radius:5px;font-size:11px;font-weight:500}
+.tag-kfaryassif{background:var(--kfaryassif-light);color:var(--kfaryassif);padding:2px 6px;border-radius:5px;font-size:11px;font-weight:500}
+.tag-morning{background:#fff8e1;color:#b8860b;padding:2px 5px;border-radius:4px;font-size:10px;font-weight:600}
+.tag-evening{background:#f0e6ff;color:#6b3fa8;padding:2px 5px;border-radius:4px;font-size:10px;font-weight:600}
+.badge-pending{background:var(--warn-light);color:var(--warn)}
+.badge-approved{background:var(--success-light);color:var(--success)}
+.badge-rejected{background:var(--danger-light);color:var(--danger)}
+.badge-swap_pending{background:#e8f0fb;color:var(--accent)}
+.badge-swap_approved{background:var(--success-light);color:var(--success)}
+.badge-swap_rejected{background:var(--danger-light);color:var(--danger)}
+.badge-giveaway{background:#f0e6ff;color:#6b3fa8}
+.badge-claimed{background:var(--warn-light);color:var(--warn)}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px}
+.stat-num{font-size:24px;font-weight:600;font-family:'DM Mono',monospace;line-height:1}
+.stat-label{font-size:10px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.4px}
+
+/* ── TABLES ── */
+.req-table{width:100%;border-collapse:collapse;font-size:13px}
+.req-table th{padding:8px 10px;text-align:start;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+.req-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.req-table tr:last-child td{border-bottom:none}
+.req-table tbody tr:hover td{background:var(--surface2)}
+
+/* ── SCHEDULE ── */
+.sched-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sched-table{border-collapse:collapse;font-size:11px;white-space:nowrap}
+.sched-table th,.sched-table td{border:1px solid var(--border);padding:5px 7px;text-align:center}
+.sched-table th{background:var(--surface2);font-weight:600;font-size:10px;color:var(--text2)}
+.slot-z{background:var(--zvulun-light);color:var(--zvulun);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;cursor:pointer}
+.slot-l{background:var(--lin-light);color:var(--lin);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;cursor:pointer}
+.slot-t{background:var(--tamra-light);color:var(--tamra);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;cursor:pointer}
+.slot-k{background:var(--kfaryassif-light);color:var(--kfaryassif);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;cursor:pointer}
+.slot-empty{color:var(--text3);font-style:italic;font-size:10px}
+.adm-weekend{background:#fffdf5}
+.adm-holiday{background:#fff8e1}
+
+/* ── FINAL SCHEDULE ── */
+.final-sched-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.final-sched-table{border-collapse:collapse;font-size:11px;white-space:nowrap;width:100%}
+.final-sched-table th{border:1px solid var(--border);padding:6px 8px;text-align:center;background:var(--surface2);font-weight:600;font-size:10px;color:var(--text2)}
+.final-sched-table td{border:1px solid var(--border);padding:5px 7px;text-align:center;vertical-align:middle}
+.final-sched-table .date-cell{font-family:'DM Mono',monospace;font-size:10px;text-align:start;padding:5px 8px;min-width:70px}
+.fs-slot-z{background:var(--zvulun-light);color:var(--zvulun);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;font-weight:500}
+.fs-slot-l{background:var(--lin-light);color:var(--lin);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;font-weight:500}
+.fs-slot-t{background:var(--tamra-light);color:var(--tamra);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;font-weight:500}
+.fs-slot-k{background:var(--kfaryassif-light);color:var(--kfaryassif);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;font-weight:500}
+.fs-slot-mine{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.fs-slot-giveaway{background:#f0e6ff;color:#6b3fa8;font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;font-weight:500;border:1px dashed #9b5de5}
+.fs-slot-empty{background:#fff3cd;border:1.5px dashed #e0a800;color:#856404;font-size:10px;border-radius:4px;padding:1px 6px;display:inline-block;margin:1px;cursor:pointer;font-weight:500;transition:all .15s}
+.fs-slot-empty:hover{background:#ffe69c}
+.weekend-row td{background:#fffdf5}
+.holiday-row td{background:#fff8e1}
+.my-shift-row td{background:#f0f6ff}
+
+/* ── PUBLISH ── */
+.publish-banner{border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.publish-banner.published{background:linear-gradient(135deg,#e8f6ed,#e8f0fb);border-color:#7ec8a0}
+.publish-banner.unpublished{background:var(--surface2)}
+.publish-dot{width:10px;height:10px;border-radius:50%;background:var(--success);display:inline-block}
+.publish-dot.off{background:var(--text3)}
+
+/* ── MONTHLY REPORT ── */
+.report-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.report-table{width:100%;border-collapse:collapse;font-size:13px;overflow-x:auto}
+.report-table th{padding:9px 11px;text-align:start;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;border-bottom:2px solid var(--border);background:var(--surface2);white-space:nowrap}
+.report-table td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
+.report-table tr:last-child td{border-bottom:none}
+.report-table tbody tr:hover td{background:var(--surface2)}
+.report-table .total-row td{font-weight:600;background:var(--accent-light);border-top:2px solid var(--accent)}
+.shift-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;border-radius:6px;font-size:12px;font-weight:700;font-family:'DM Mono',monospace;padding:0 4px}
+.count-0{background:var(--surface2);color:var(--text3)}
+.count-low{background:var(--success-light);color:var(--success)}
+.count-mid{background:var(--warn-light);color:var(--warn)}
+.count-high{background:var(--danger-light);color:var(--danger)}
+.report-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.report-summary-card{background:var(--surface2);border-radius:var(--radius);padding:12px 14px;text-align:center}
+.report-summary-num{font-size:22px;font-weight:600;font-family:'DM Mono',monospace}
+.report-summary-label{font-size:11px;color:var(--text2);margin-top:2px}
+@media(max-width:640px){.report-summary-grid{grid-template-columns:repeat(2,1fr)}.report-table{font-size:12px}.report-table th,.report-table td{padding:6px 7px}}
+
+/* ── EXCHANGE CARDS ── */
+.avail-card{background:linear-gradient(135deg,#f5f0ff,#ede8ff);border:1.5px solid #c4b5fd;border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.swap-req-card{background:var(--accent-light);border:1.5px solid #93c5fd;border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* ── SLOT RULES ── */
+.rules-table{width:100%;border-collapse:collapse;font-size:13px}
+.rules-table th{padding:8px 10px;text-align:start;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+.rules-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.rules-table tr:last-child td{border-bottom:none}
+.rule-add-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border);margin-top:8px}
+.need-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:700;font-family:'DM Mono',monospace}
+.need-2{background:var(--surface2);color:var(--text2)}
+.need-3{background:var(--warn-light);color:var(--warn)}
+.need-4{background:var(--danger-light);color:var(--danger)}
+
+/* ── DOCTORS ── */
+.doctor-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.spec-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px}
+.doctor-item{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;gap:5px}
+.doctor-item:last-child{border-bottom:none}
+.doctor-item .doc-name{flex:1}
+.doctor-item .pin-badge{font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 6px;color:var(--text2);cursor:pointer;white-space:nowrap}
+.add-row{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.add-row input{flex:1;font-size:12px;padding:5px 8px;min-width:70px}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;padding:12px}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:22px;width:420px;max-width:100%;transform:translateY(8px);transition:transform .2s;max-height:92vh;overflow-y:auto}
+.overlay.open .modal{transform:translateY(0)}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:16px}
+.modal-row{display:flex;flex-direction:column;gap:4px;margin-bottom:11px}
+.modal-row label{font-size:12px;color:var(--text2);font-weight:500}
+.modal-row select,.modal-row input{width:100%}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.shift-toggle{display:flex;gap:8px;margin-top:4px}
+.shift-btn{flex:1;padding:9px;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;background:var(--surface);color:var(--text2);transition:all .15s;text-align:center}
+.shift-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+
+/* ── MISC ── */
+.pw-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;padding:16px}
+.pw-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px 34px;width:320px;max-width:100%;box-shadow:0 8px 32px rgba(0,0,0,.1);display:flex;flex-direction:column;gap:13px;align-items:center;text-align:center}
+.pw-box .logo{font-size:18px;font-weight:600}.pw-box .logo span{color:var(--accent)}
+.pw-box input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:inherit;text-align:center;letter-spacing:2px}
+.pw-box input:focus{outline:none;border-color:var(--accent)}
+.pw-error{color:var(--danger);font-size:12px;display:none}
+.loading-overlay{position:fixed;inset:0;background:rgba(245,244,240,.88);display:none;align-items:center;justify-content:center;z-index:400;font-size:14px;color:var(--text2);gap:10px}
+.loading-overlay.show{display:flex}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block}
+.sync-dot.syncing{background:var(--warn);animation:pulse 1s infinite}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.empty-state{padding:32px;text-align:center;color:var(--text3);font-size:13px}
+.empty-state .icon{font-size:26px;margin-bottom:8px}
+.toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.info-box{background:var(--accent-light);border:1px solid #b3cff5;border-radius:var(--radius);padding:10px 13px;font-size:12px;color:var(--accent);margin-bottom:11px}
+.wa-box{background:var(--surface2);border-radius:var(--radius);padding:12px 14px;font-size:13px;line-height:1.75;white-space:pre-wrap;border:1px solid var(--border)}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a1916;color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;z-index:700;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text2);margin-top:8px;align-items:center}
+.legend-item{display:flex;align-items:center;gap:4px}
+.conflict-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.conflict-item:last-child{border-bottom:none}
+.section-title{font-size:14px;font-weight:600;margin-bottom:8px}
+.section-divider{height:1px;background:var(--border);margin:14px 0}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="logo">Moked<span>Sched</span></div>
+    <div style="font-size:13px;color:var(--text2)" class="t" data-he="זבולון · לין · טמרה · כפר יאסיף" data-en="Zvulun · Lin · Tamra · Kfar Yassif" id="login-subtitle">זבולון · לין · טמרה · כפר יאסיף</div>
+    <div class="login-step" id="login-step1">
+      <div style="font-size:13px;color:var(--text2);font-weight:500;align-self:flex-start" id="lbl-specialty">בחר התמחות</div>
+      <select id="login-specialty" style="width:100%" onchange="loginSpecChange()">
+        <option value="" id="opt-select-spec">— בחר התמחות —</option>
+        <option value="ortho">אורתופדיה</option>
+        <option value="pedia">ילדים</option>
+        <option value="internal">פנימית</option>
+      </select>
+      <div style="font-size:13px;color:var(--text2);font-weight:500;align-self:flex-start;margin-top:4px" id="lbl-name">בחר שם</div>
+      <select id="login-name" style="width:100%"><option value="" id="opt-select-name">— בחר שם —</option></select>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="loginStep1Next()" id="btn-continue">המשך →</button>
+    </div>
+    <div class="login-step" id="login-step2" style="display:none">
+      <div style="font-size:13px;font-weight:600" id="login-greeting">הזן קוד</div>
+      <div style="font-size:12px;color:var(--text2)" id="lbl-default-pin">ברירת מחדל: <strong>1234</strong></div>
+      <div class="pin-display">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-error" id="pin-error"></div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key zero" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinDel()">⌫</button>
+      </div>
+      <button class="login-back" onclick="loginBack()" id="btn-back">← חזרה</button>
+    </div>
+    <button class="lang-btn" onclick="toggleLang()" id="login-lang-btn">EN</button>
+  </div>
+</div>
+
+<!-- ADMIN PASSWORD -->
+<div class="pw-screen" id="pw-screen" style="display:none">
+  <div class="pw-box">
+    <div class="logo">Moked<span>Sched</span></div>
+    <p id="pw-title">🔒 כניסת מנהל</p>
+    <input type="password" id="pw-input" placeholder="סיסמה" onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="pw-error" id="pw-error">❌ סיסמה שגויה</div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="checkPw()" id="btn-enter-admin">כניסה</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px" onclick="cancelAdmin()" id="btn-back-admin">← חזרה</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading-overlay">
+  <div style="border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;width:20px;height:20px;animation:spin .6s linear infinite"></div>
+  <span id="loading-msg">מתחבר...</span>
+</div>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">Moked<span>Sched</span></div>
+    <div class="divider"></div>
+    <span style="font-size:11px;color:var(--text2)" class="t" data-he="זבולון · לין · טמרה · כפר יאסיף" data-en="Zvulun · Lin · Tamra · Kfar Yassif" id="header-clinic-name">זבולון · לין · טמרה · כפר יאסיף</span>
+    <span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px">
+      <span class="sync-dot" id="sync-dot"></span><span id="sync-label">חי</span>
+    </span>
+    <div class="view-tabs">
+      <button class="tab active" onclick="showPanel('doctor',this)" id="tab-doctor-btn">🩺 <span class="t" data-he="פורטל רופאים" data-en="Doctor Portal">פורטל רופאים</span></button>
+      <button class="tab" onclick="showPanel('admin',this)" id="tab-admin-btn">⚙️ <span class="t" data-he="מנהל" data-en="Admin">מנהל</span></button>
+    </div>
+    <button class="lang-btn" onclick="toggleLang()" id="header-lang-btn">EN</button>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DOCTOR PORTAL ══ -->
+    <div class="panel active" id="panel-doctor">
+      <div class="doc-bar">
+        <div>
+          <div class="doc-bar-name" id="doc-bar-name">—</div>
+          <div style="font-size:12px;color:var(--text2)" id="doc-bar-info">—</div>
+        </div>
+        <div class="doc-bar-btns">
+          <button class="btn btn-ghost btn-sm" onclick="openChangePinModal()">🔑 <span class="t" data-he="שנה קוד" data-en="Change PIN">שנה קוד</span></button>
+          <button class="btn btn-ghost btn-sm" onclick="logoutDoctor()"><span class="t" data-he="יציאה" data-en="Log out">יציאה</span></button>
+        </div>
+      </div>
+      <div class="doc-inner-tabs">
+        <button class="ditab active" id="ditab-myshifts" onclick="showDocTab('myshifts')">📋 <span class="t" data-he="המשמרות שלי" data-en="My Shifts">המשמרות שלי</span></button>
+        <button class="ditab" id="ditab-finalschedule" onclick="showDocTab('finalschedule')">📅 <span class="t" data-he="לוח סופי" data-en="Final Schedule">לוח סופי</span></button>
+        <button class="ditab" id="ditab-exchange" onclick="showDocTab('exchange')">🔄 <span class="t" data-he="זמין &amp; החלפות" data-en="Available &amp; Swaps">זמין &amp; החלפות</span></button>
+      </div>
+
+      <!-- MY SHIFTS -->
+      <div id="dtab-myshifts">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="card-title" style="margin-bottom:0" id="cal-label"></div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="prevMonth()">◂</button>
+              <button class="btn btn-ghost btn-sm" onclick="nextMonth()">▸</button>
+            </div>
+          </div>
+          <div class="cal-wrapper">
+            <div class="cal-grid-wrap" id="cal-headers-row"></div>
+            <div class="cal-grid-wrap" id="cal-grid"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:8px" id="cal-legend-text">🟡 שישי / שבת / חג — משמרות בוקר וערב</div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div class="card-title" style="margin-bottom:0" id="lbl-my-requests">My Shift Requests</div>
+            <select id="doc-f-month" onchange="renderMyReqs()" style="font-size:12px;padding:5px 8px"></select>
+          </div>
+          <div id="my-requests"><div class="empty-state"><div class="icon">📋</div><span class="t" data-he="לחץ על יום בלוח לבקש משמרת" data-en="Click a day on the calendar to request a shift">Click a day on the calendar to request a shift</span></div></div>
+        </div>
+      </div>
+
+      <!-- FINAL SCHEDULE -->
+      <div id="dtab-finalschedule" style="display:none"><div id="final-sched-container"></div></div>
+
+      <!-- AVAILABLE & SWAPS -->
+      <div id="dtab-exchange" style="display:none">
+        <div class="card">
+          <div class="section-title">🎁 <span class="t" data-he="משמרות זמינות — אותה התמחות" data-en="Available shifts — same specialty">משמרות זמינות — אותה התמחות</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px" class="t" data-he="רופאים אלה רוצים למסור משמרת. לחץ 'קח משמרת' לתבוע — המנהל יאשר." data-en="These doctors want to give away a shift. Click 'Take this shift' to claim — director will approve.">רופאים אלה רוצים למסור משמרת. לחץ 'קח משמרת' לתבוע — המנהל יאשר.</p>
+          <div id="available-shifts-list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">⇄ <span class="t" data-he="בקשות החלפה אליי" data-en="Swap requests sent to me">בקשות החלפה אליי</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px" class="t" data-he="רופא אחר רוצה להחליף עמך משמרת." data-en="Another doctor wants to swap shifts with you.">רופא אחר רוצה להחליף עמך משמרת.</p>
+          <div id="incoming-swaps-list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">📤 <span class="t" data-he="הבקשות שלי" data-en="My requests">הבקשות שלי</span></div>
+          <div id="my-outgoing-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN ══ -->
+    <div class="panel" id="panel-admin">
+      <div class="stats-row" id="admin-stats"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="admin-inner-tabs">
+          <button class="itab active" id="itab-req" onclick="showAdminTab('req')"><span class="t" data-he="בקשות" data-en="Requests">בקשות</span></button>
+          <button class="itab" id="itab-sched" onclick="showAdminTab('sched')"><span class="t" data-he="לוח" data-en="Schedule">לוח</span></button>
+          <button class="itab" id="itab-publish" onclick="showAdminTab('publish')">📢 <span class="t" data-he="פרסום" data-en="Publish">פרסום</span></button>
+          <button class="itab" id="itab-report" onclick="showAdminTab('report')">📊 <span class="t" data-he="דוח חודשי" data-en="Monthly Report">דוח חודשי</span></button>
+          <button class="itab" id="itab-conflicts" onclick="showAdminTab('conflicts')"><span class="t" data-he="קונפליקטים" data-en="Conflicts">קונפליקטים</span></button>
+          <button class="itab" id="itab-exchange" onclick="showAdminTab('exchange')">🔄 <span class="t" data-he="החלפות" data-en="Swaps">החלפות</span></button>
+          <button class="itab" id="itab-rules" onclick="showAdminTab('rules')">⚡ <span class="t" data-he="כללי משמרת" data-en="Slot Rules">כללי משמרת</span></button>
+          <button class="itab" id="itab-holidays" onclick="showAdminTab('holidays')"><span class="t" data-he="חגים" data-en="Holidays">חגים</span></button>
+          <button class="itab" id="itab-doctors" onclick="showAdminTab('doctors')"><span class="t" data-he="רופאים" data-en="Doctors">רופאים</span></button>
+          <button class="itab" id="itab-links" onclick="showAdminTab('links')"><span class="t" data-he="שתף" data-en="Share">שתף</span></button>
+        </div>
+        <div style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-warn btn-sm" onclick="autoSchedule()">⚡ <span class="t" data-he="סידור אוטומטי" data-en="Auto-Schedule">סידור אוטומטי</span></button>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadAll()">↺</button>
+        </div>
+      </div>
+
+      <!-- REQUESTS -->
+      <div id="tab-req">
+        <div class="card">
+          <div class="toolbar">
+            <select id="f-status" onchange="renderRequests()"></select>
+            <select id="f-spec" onchange="renderRequests()"></select>
+            <select id="f-site" onchange="renderRequests()"><option value="">—</option><option value="ZVULUN">ZVULUN</option><option value="LIN">LIN</option><option value="TAMRA">TAMRA</option><option value="KFARYASSIF">KFAR YASSIF</option></select>
+            <select id="f-doctor" onchange="renderRequests()"></select>
+            <select id="f-shift" onchange="renderRequests()"></select>
+            <select id="f-month" onchange="renderRequests()"></select>
+            <button class="btn btn-success btn-sm" onclick="bulkApprove()">✓ <span class="t" data-he="אשר הכל" data-en="Approve all">אשר הכל</span></button>
+            <button class="btn btn-danger btn-sm" onclick="bulkReject()">✗ <span class="t" data-he="דחה הכל" data-en="Reject all">דחה הכל</span></button>
+          </div>
+          <div style="overflow-x:auto" id="req-table"></div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div id="tab-sched" style="display:none">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+            <div class="card-title" style="margin-bottom:0"><span class="t" data-he="לוח משמרות" data-en="Schedule">לוח משמרות</span></div>
+            <select id="sched-month" onchange="renderSchedule()"></select>
+            <span style="font-size:11px;color:var(--text2)" class="t" data-he="💡 לחץ על שם להעביר בין אתרים" data-en="💡 Click a name to move between sites">💡 לחץ על שם להעביר בין אתרים</span>
+          </div>
+          <div class="sched-scroll" id="sched-grid"></div>
+        </div>
+      </div>
+
+      <!-- PUBLISH -->
+      <div id="tab-publish" style="display:none">
+        <div class="card">
+          <div class="card-title"><span class="t" data-he="פרסום לוח סופי" data-en="Publish Final Schedule">פרסום לוח סופי</span></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px" class="t" data-he="לוחות מפורסמים גלויים לרופאים. ניתן לערוך אחרי פרסום." data-en="Published schedules are visible to doctors. You can still edit after publishing.">לוחות מפורסמים גלויים לרופאים. ניתן לערוך אחרי פרסום.</p>
+          <div id="publish-months-list"></div>
+        </div>
+      </div>
+
+      <!-- MONTHLY REPORT -->
+      <div id="tab-report" style="display:none">
+        <div class="card">
+          <div class="card-title">📊 <span class="t" data-he="דוח חודשי" data-en="Monthly Report">דוח חודשי</span></div>
+          <div class="report-controls">
+            <select id="report-month" onchange="renderReport()"></select>
+            <select id="report-spec" onchange="renderReport()"></select>
+            <button class="btn btn-primary btn-sm" onclick="exportReportCSV()">↓ <span class="t" data-he="ייצוא Excel/CSV" data-en="Export Excel/CSV">ייצוא Excel/CSV</span></button>
+          </div>
+          <div id="report-summary" class="report-summary-grid"></div>
+          <div style="overflow-x:auto"><div id="report-table-wrap"></div></div>
+        </div>
+      </div>
+
+      <!-- CONFLICTS -->
+      <div id="tab-conflicts" style="display:none">
+        <div class="card"><div class="card-title"><span class="t" data-he="קונפליקטים" data-en="Conflicts">קונפליקטים</span></div><div id="conflicts-list"></div></div>
+      </div>
+
+      <!-- EXCHANGE (ADMIN) -->
+      <div id="tab-exchange" style="display:none">
+        <div class="card">
+          <div class="section-title">🎁 <span class="t" data-he="תביעות מסירה — ממתינות לאישורך" data-en="Giveaway claims — awaiting your approval">תביעות מסירה — ממתינות לאישורך</span></div>
+          <div id="admin-giveaways-list"></div>
+          <div class="section-divider"></div>
+          <div class="section-title">⇄ <span class="t" data-he="בקשות החלפה — ממתינות לאישורך" data-en="Swap requests — awaiting your approval">בקשות החלפה — ממתינות לאישורך</span></div>
+          <div id="admin-swaps-list"></div>
+        </div>
+      </div>
+
+      <!-- SLOT RULES -->
+      <div id="tab-rules" style="display:none">
+        <div class="card">
+          <div class="card-title"><span class="t" data-he="כללי משמרת — מספר רופאים נדרש" data-en="Slot Rules — Doctors needed">כללי משמרת — מספר רופאים נדרש</span></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:8px" class="t" data-he="ברירת מחדל: זבולון=2, לין=1, טמרה=2, כפר יאסיף=1. הוסף חריגים:" data-en="Default: ZVULUN=2, LIN=1, TAMRA=2, KFAR YASSIF=1. Add exceptions:">ברירת מחדל: זבולון=2, לין=1, טמרה=2, כפר יאסיף=1. הוסף חריגים:</p>
+          <div style="overflow-x:auto"><table class="rules-table">
+            <thead><tr>
+              <th><span class="t" data-he="יום" data-en="Day">יום</span></th>
+              <th><span class="t" data-he="התמחות" data-en="Specialty">התמחות</span></th>
+              <th><span class="t" data-he="אתר" data-en="Site">אתר</span></th>
+              <th><span class="t" data-he="משמרת" data-en="Shift">משמרת</span></th>
+              <th><span class="t" data-he="נדרש" data-en="Needed">נדרש</span></th>
+              <th></th>
+            </tr></thead>
+            <tbody id="rules-tbody"></tbody>
+          </table></div>
+          <div class="rule-add-row">
+            <select id="r-day"></select>
+            <select id="r-spec"></select>
+            <select id="r-site"><option value="ZVULUN">ZVULUN</option><option value="LIN">LIN</option><option value="TAMRA">TAMRA</option><option value="KFARYASSIF">KFAR YASSIF</option></select>
+            <select id="r-shift"></select>
+            <input type="number" id="r-needed" value="3" min="1" max="10" style="width:65px;text-align:center">
+            <button class="btn btn-primary btn-sm" onclick="addRule()">+ <span class="t" data-he="הוסף" data-en="Add">הוסף</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOLIDAYS -->
+      <div id="tab-holidays" style="display:none">
+        <div class="card">
+          <div class="card-title"><span class="t" data-he="חגים וימים מיוחדים" data-en="Holidays &amp; Special days">חגים וימים מיוחדים</span></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <input type="date" id="hol-date">
+            <input type="text" id="hol-name" style="flex:1;min-width:130px" placeholder="ראש השנה...">
+            <button class="btn btn-primary btn-sm" onclick="addHoliday()">+ <span class="t" data-he="הוסף" data-en="Add">הוסף</span></button>
+          </div>
+          <div id="holidays-list"></div>
+        </div>
+      </div>
+
+      <!-- DOCTORS -->
+      <div id="tab-doctors" style="display:none">
+        <div class="card">
+          <div class="card-title"><span class="t" data-he="רשימת רופאים וקודים" data-en="Doctors &amp; PINs">רשימת רופאים וקודים</span></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px" class="t" data-he="שינויים נשמרים בבסיס הנתונים מיד. לחץ על קוד לאיפוס." data-en="Changes saved to database immediately. Click PIN to reset.">שינויים נשמרים בבסיס הנתונים מיד. לחץ על קוד לאיפוס.</p>
+          <div class="doctor-cols" id="doctor-cols"></div>
+        </div>
+      </div>
+
+      <!-- LINKS -->
+      <div id="tab-links" style="display:none">
+        <div class="card">
+          <div class="card-title"><span class="t" data-he="שתף עם רופאים" data-en="Share with doctors">שתף עם רופאים</span></div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500" class="t" data-he="קישור לאפליקציה" data-en="App link">קישור לאפליקציה</div>
+              <div style="display:flex;gap:8px"><input type="text" id="app-link" value="" placeholder="https://your-new-app-url-here" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="copyLink()"><span class="t" data-he="העתק" data-en="Copy">העתק</span></button></div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500" class="t" data-he="הודעת וואטסאפ" data-en="WhatsApp message">הודעת וואטסאפ</div>
+              <div class="wa-box" id="wa-msg"></div>
+              <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                <button class="btn btn-success btn-sm" onclick="openWA()">📱 WhatsApp</button>
+                <button class="btn btn-ghost btn-sm" onclick="copyWA()"><span class="t" data-he="העתק" data-en="Copy">העתק</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHIFT REQUEST MODAL -->
+<div class="overlay" id="modal-shift">
+  <div class="modal">
+    <h3 id="modal-shift-title">בקשת משמרת</h3>
+    <div class="modal-row"><label id="lbl-date">תאריך</label><input type="text" id="m-date" readonly style="background:var(--surface2)"></div>
+    <div class="modal-row"><label id="lbl-site">אתר</label><select id="m-site"><option value="ZVULUN">ZVULUN (2 רופאים/התמחות)</option><option value="LIN">LIN (1 רופא/התמחות)</option><option value="TAMRA">TAMRA (2 רופאים/התמחות)</option><option value="KFARYASSIF">KFAR YASSIF (1 רופא/התמחות)</option></select></div>
+    <div class="modal-row" id="m-shift-row" style="display:none">
+      <label id="lbl-shift-time">סוג משמרת</label>
+      <div class="shift-toggle">
+        <button class="shift-btn active" id="btn-morning" onclick="selectShift('morning')">🌅 <span class="t" data-he="בוקר" data-en="Morning">בוקר</span></button>
+        <button class="shift-btn" id="btn-evening" onclick="selectShift('evening')">🌙 <span class="t" data-he="ערב" data-en="Evening">ערב</span></button>
+      </div>
+    </div>
+    <div id="m-warn" style="background:var(--warn-light);color:var(--warn);font-size:12px;padding:8px 11px;border-radius:8px;display:none;margin-top:6px"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-shift')" class="t" data-he="ביטול" data-en="Cancel"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-primary" id="submit-btn" onclick="submitRequest()"><span class="t" data-he="שלח בקשה" data-en="Submit request">שלח בקשה</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- GIVE AWAY MODAL -->
+<div class="overlay" id="modal-giveaway">
+  <div class="modal">
+    <h3><span class="t" data-he="מסור משמרת" data-en="Give away a shift">מסור משמרת</span></h3>
+    <div class="info-box t" data-he="משמרת זו תוצג לרופאים אחרים באותה התמחות. כל אחד יוכל לתבוע אותה — המנהל יאשר." data-en="This shift will be visible to other doctors of your specialty. Anyone can claim it — the director will approve.">משמרת זו תוצג לרופאים אחרים באותה התמחות. כל אחד יוכל לתבוע אותה — המנהל יאשר.</div>
+    <div class="modal-row"><label><span class="t" data-he="בחר משמרת למסירה" data-en="Select shift to give away">בחר משמרת למסירה</span></label><select id="ga-shift"></select></div>
+    <div class="modal-row"><label><span class="t" data-he="סיבה (אופציונלי)" data-en="Reason (optional)">סיבה (אופציונלי)</span></label><input type="text" id="ga-reason" placeholder="מחויבות אישית..."></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-giveaway')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-primary" onclick="submitGiveaway()"><span class="t" data-he="מסור" data-en="Give away">מסור</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- SWAP MODAL -->
+<div class="overlay" id="modal-swap">
+  <div class="modal">
+    <h3><span class="t" data-he="בקשת החלפת משמרת" data-en="Request shift swap">בקשת החלפת משמרת</span></h3>
+    <div class="info-box t" data-he="הרופא השני יצטרך לאשר לפני שהבקשה מגיעה למנהל." data-en="The other doctor must accept before this reaches the director.">הרופא השני יצטרך לאשר לפני שהבקשה מגיעה למנהל.</div>
+    <div class="modal-row"><label><span class="t" data-he="המשמרת שלי למסור" data-en="My shift to give">המשמרת שלי למסור</span></label><select id="sw-my"></select></div>
+    <div class="modal-row"><label><span class="t" data-he="רופא להחלפה" data-en="Doctor to swap with">רופא להחלפה</span></label><select id="sw-other"></select></div>
+    <div class="modal-row"><label><span class="t" data-he="המשמרת שלו שאני רוצה (אופציונלי)" data-en="Their shift I want (optional)">המשמרת שלו שאני רוצה (אופציונלי)</span></label><select id="sw-their"></select></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-swap')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-primary" onclick="submitSwap()"><span class="t" data-he="שלח בקשה" data-en="Send request">שלח בקשה</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- VOLUNTEER MODAL -->
+<div class="overlay" id="modal-volunteer">
+  <div class="modal">
+    <h3><span class="t" data-he="התנדבות למשמרת פנויה" data-en="Volunteer for empty slot">התנדבות למשמרת פנויה</span></h3>
+    <div id="volunteer-info" style="background:var(--warn-light);border:1px solid #f0c060;border-radius:var(--radius);padding:12px 13px;font-size:13px;margin-bottom:12px"></div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px" class="t" data-he="לשלוח בקשת משמרת לחריץ פנוי זה? המנהל יאשר." data-en="Submit a shift request for this empty slot? The director will approve.">לשלוח בקשת משמרת לחריץ פנוי זה? המנהל יאשר.</p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-volunteer')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-primary" onclick="submitVolunteer()"><span class="t" data-he="כן, בקש משמרת" data-en="Yes, request this shift">כן, בקש משמרת</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PIN MODAL -->
+<div class="overlay" id="modal-changepin">
+  <div class="modal" style="width:340px">
+    <h3><span class="t" data-he="שנה קוד כניסה" data-en="Change your PIN">שנה קוד כניסה</span></h3>
+    <div class="modal-row"><label><span class="t" data-he="קוד נוכחי" data-en="Current PIN">קוד נוכחי</span></label><input type="password" id="cp-current" maxlength="4" placeholder="••••" style="letter-spacing:4px;text-align:center"></div>
+    <div class="modal-row"><label><span class="t" data-he="קוד חדש (4 ספרות)" data-en="New PIN (4 digits)">קוד חדש (4 ספרות)</span></label><input type="password" id="cp-new" maxlength="4" placeholder="••••" style="letter-spacing:4px;text-align:center"></div>
+    <div class="modal-row"><label><span class="t" data-he="אשר קוד חדש" data-en="Confirm new PIN">אשר קוד חדש</span></label><input type="password" id="cp-confirm" maxlength="4" placeholder="••••" style="letter-spacing:4px;text-align:center"></div>
+    <div id="cp-error" style="color:var(--danger);font-size:12px;display:none"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-changepin')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-primary" onclick="changePinSubmit()"><span class="t" data-he="שנה קוד" data-en="Change PIN">שנה קוד</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE MODAL -->
+<div class="overlay" id="modal-move">
+  <div class="modal">
+    <h3 id="move-title"></h3>
+    <p id="move-desc" style="font-size:13px;color:var(--text2);margin-bottom:14px"></p>
+    <div class="modal-row"><label><span class="t" data-he="העבר לאתר" data-en="Move to site">העבר לאתר</span></label><select id="move-site"><option value="ZVULUN">ZVULUN</option><option value="LIN">LIN</option><option value="TAMRA">TAMRA</option><option value="KFARYASSIF">KFAR YASSIF</option></select></div>
+    <div class="modal-row" id="move-shift-row" style="display:none"><label><span class="t" data-he="סוג משמרת" data-en="Shift time">סוג משמרת</span></label><select id="move-shift"><option value="morning">🌅 בוקר</option><option value="evening">🌙 ערב</option></select></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-move')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-primary" onclick="applyMove()"><span class="t" data-he="העבר" data-en="Move">העבר</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFLICT MODAL -->
+<div class="overlay" id="modal-conflict">
+  <div class="modal" style="width:440px">
+    <h3 id="cm-title"></h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px" id="cm-sub"></p>
+    <div id="cm-body"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-conflict')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-primary" onclick="applyConflict()"><span class="t" data-he="אשר" data-en="Apply">אשר</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════
+const SB_URL='https://dmbqgocsvaybdidjnrkz.supabase.co';
+const SB_KEY='sb_publishable_erJ2H8aDnkSJY9CBh1Wh1A_aXahCRbc';
+const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+const api=(t,q='')=>`${SB_URL}/rest/v1/${t}?${q}`;
+async function dbGet(t,q=''){const r=await fetch(api(t,'order=created_at.asc&'+q),{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function dbIns(t,row){const r=await fetch(api(t),{method:'POST',headers:H,body:JSON.stringify(row)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function dbUpd(t,id,p){const r=await fetch(api(t,'id=eq.'+id),{method:'PATCH',headers:H,body:JSON.stringify(p)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function dbDel(t,id){const r=await fetch(api(t,'id=eq.'+id),{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text());}
+
+// ══════════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════════
+let lang=localStorage.getItem('clinicsched_lang')||'en';
+
+const T={
+  he:{
+    live:'חי',syncing:'מסנכרן...',
+    connecting:'מתחבר...',autoSched:'מסדר אוטומטית...',
+    portal:'פורטל רופאים',admin:'מנהל',
+    specialty:{ortho:'אורתופדיה',pedia:'ילדים',internal:'פנימית'},
+    sites:{ZVULUN:'זבולון',LIN:'לין',TAMRA:'טמרה',KFARYASSIF:'כפר יאסיף'},
+    shifts:{morning:'בוקר',evening:'ערב',regular:'רגיל'},
+    days:['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'],
+    months:['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'],
+    statuses:{pending:'ממתין',approved:'אושר',rejected:'נדחה',swap_pending:'ממתין להחלפה',swap_approved:'החלפה אושרה',swap_rejected:'החלפה נדחתה',giveaway:'זמין למסירה',claimed:'נתבע'},
+    calHeader:['א','ב','ג','ד','ה','ו','ש'],
+    friday:'שישי',saturday:'שבת',
+    filterAll:'הכל',filterStatus:'כל הסטטוסים',filterSpec:'כל ההתמחויות',filterDoctor:'כל הרופאים',filterShift:'כל המשמרות',
+    report:{title:'דוח חודשי',totalShifts:'סה"כ משמרות',avgPerDoc:'ממוצע לרופא',emptySlots:'חריצים פנויים',doctor:'רופא',zvulun:'זבולון',lin:'לין',tamra:'טמרה',kfaryassif:'כפר יאסיף',morning:'בוקר',evening:'ערב',regular:'רגיל',total:'סה"כ',spec:'התמחות'},
+    moved:'הועבר בהצלחה ל',
+    pinChanged:'קוד שונה ✓',
+    pinWrong:'קוד שגוי',
+    pinWrongCurrent:'הקוד הנוכחי שגוי',
+    pin4digits:'הקוד חייב להיות 4 ספרות',
+    pinNoMatch:'הקודים אינם תואמים',
+    requestSent:'✓ הבקשה נשלחה!',
+    slotExists:'כבר יש לך בקשה לחריץ זה',
+    giveawaySent:'✓ המשמרת פורסמה כזמינה!',
+    swapSent:'✓ בקשת ההחלפה נשלחה!',
+    claimSent:'✓ התביעה נשלחה! ממתין לאישור המנהל.',
+    swapAccepted:'✓ ההחלפה אושרה! ממתין לאישור המנהל.',
+    swapDeclined:'ההחלפה נדחתה.',
+    giveawayApproved:'✓ המסירה אושרה — המשמרת הועברה ל',
+    giveawayRejected:'התביעה נדחתה — המשמרת זמינה שוב',
+    swapApproved:'✓ ההחלפה אושרה!',
+    swapRejected:'ההחלפה נדחתה.',
+    ruleAdded:'כלל נוסף ✓',ruleRemoved:'כלל הוסר',
+    holidayAdded:'חג נוסף ✓',holidayRemoved:'הוסר',
+    doctorAdded:'רופא נוסף ✓',doctorRemoved:'הוסר',
+    pinReset:'קוד אופס ל',
+    published:'✓ הלוח פורסם!',unpublished:'הפרסום בוטל',
+    autoResult:'⚡ אושרו: ',autoRejected:' | נדחו: ',
+    resolved:'נפתר ✓',
+    removed:'הוסר',cancelled:'הבקשה בוטלה',
+    csvExported:'יוצא ✓',
+    copied:'הועתק!',
+    errorPrefix:'שגיאה: ',
+    use:'השתמש',
+    noSchedule:'הלוח טרם פורסם. המנהל יפרסם בקרוב.',
+    noAvailable:'אין משמרות זמינות מהתמחותך כרגע.',
+    noIncoming:'אין בקשות החלפה נכנסות.',
+    noOutgoing:'אין בקשות יוצאות.',
+    noConflicts:'אין קונפליקטים.',
+    noRequests:'אין בקשות.',
+    noRules:'אין כללים — ברירת מחדל: זבולון=2, לין=1, טמרה=2, כפר יאסיף=1',
+    noHolidays:'אין חגים.',
+    pinLabel:'קוד',
+    removeLabel:'הסר',
+    approveLabel:'✓ אשר',rejectLabel:'✗ דחה',resetLabel:'↺',editLabel:'✏️',
+    moveLabel:'העבר',
+    takeShift:'קח משמרת',accept:'✓ אשר',decline:'✗ דחה',
+    giveAway:'🎁 מסור',swap:'⇄ החלף',cancel:'בטל',cancelGiveaway:'בטל מסירה',
+    availStatus:{available:'זמין — ממתין לתביעה',claimed:'נתבע — ממתין לאישור מנהל',completed:'✓ הושלם — הועבר',availAgain:'זמין שוב'},
+    swapOutStatus:{waiting:'ממתין ל',declined:'נדחה על ידי',adminPending:'אושר — ממתין למנהל',adminApproved:'✓ הושלם',adminRejected:'נדחה על ידי מנהל'},
+    publishStatus:{published:'● פורסם',notPublished:'לא פורסם'},
+    approvedCount:'אושרו',pendingCount:'ממתינים',
+    needAttention:'דורשים תשומת לב',totalRequests:'סה"כ בקשות',
+  },
+  en:{
+    live:'Live',syncing:'Syncing...',
+    connecting:'Connecting...',autoSched:'Auto-scheduling...',
+    portal:'Doctor Portal',admin:'Admin',
+    specialty:{ortho:'Orthopedics',pedia:'Pediatrics',internal:'Internal Med'},
+    sites:{ZVULUN:'ZVULUN',LIN:'LIN',TAMRA:'TAMRA',KFARYASSIF:'KFAR YASSIF'},
+    shifts:{morning:'Morning',evening:'Evening',regular:'Regular'},
+    days:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    statuses:{pending:'Pending',approved:'Approved',rejected:'Rejected',swap_pending:'Swap Pending',swap_approved:'Swap Approved',swap_rejected:'Swap Rejected',giveaway:'Available',claimed:'Claimed'},
+    calHeader:['Su','Mo','Tu','We','Th','Fr','Sa'],
+    friday:'Friday',saturday:'Saturday',
+    filterAll:'All',filterStatus:'All statuses',filterSpec:'All specialties',filterDoctor:'All doctors',filterShift:'All shift types',
+    report:{title:'Monthly Report',totalShifts:'Total Shifts',avgPerDoc:'Avg per Doctor',emptySlots:'Empty Slots',doctor:'Doctor',zvulun:'ZVULUN',lin:'LIN',tamra:'TAMRA',kfaryassif:'KFAR YASSIF',morning:'Morning',evening:'Evening',regular:'Regular',total:'Total',spec:'Specialty'},
+    moved:'Moved to ',
+    pinChanged:'PIN changed ✓',
+    pinWrong:'Incorrect PIN',
+    pinWrongCurrent:'Current PIN is incorrect',
+    pin4digits:'PIN must be 4 digits',
+    pinNoMatch:'PINs do not match',
+    requestSent:'✓ Request submitted!',
+    slotExists:'You already have a request for this slot',
+    giveawaySent:'✓ Shift posted as available!',
+    swapSent:'✓ Swap request sent!',
+    claimSent:'✓ Claim submitted! Waiting for approval.',
+    swapAccepted:'✓ Swap accepted! Waiting for director.',
+    swapDeclined:'Swap declined.',
+    giveawayApproved:'✓ Giveaway approved — shift transferred to ',
+    giveawayRejected:'Claim rejected — shift available again',
+    swapApproved:'✓ Swap approved & shifts exchanged!',
+    swapRejected:'Swap rejected.',
+    ruleAdded:'Rule added ✓',ruleRemoved:'Rule removed',
+    holidayAdded:'Holiday added ✓',holidayRemoved:'Removed',
+    doctorAdded:'Doctor added ✓',doctorRemoved:'Removed',
+    pinReset:'PIN reset for ',
+    published:'✓ Schedule published!',unpublished:'Schedule unpublished',
+    autoResult:'⚡ Approved: ',autoRejected:' | Rejected: ',
+    resolved:'Resolved ✓',
+    removed:'Removed',cancelled:'Request cancelled',
+    csvExported:'Exported ✓',
+    copied:'Copied!',
+    errorPrefix:'Error: ',
+    use:'Use',
+    noSchedule:'No schedule published yet. The director will publish it soon.',
+    noAvailable:'No available shifts from your specialty right now.',
+    noIncoming:'No incoming swap requests.',
+    noOutgoing:'No outgoing requests.',
+    noConflicts:'No conflicts.',
+    noRequests:'No requests match.',
+    noRules:'No custom rules — defaults: ZVULUN=2, LIN=1, TAMRA=2, KFAR YASSIF=1',
+    noHolidays:'No holidays yet.',
+    pinLabel:'PIN',
+    removeLabel:'×',
+    approveLabel:'✓',rejectLabel:'✗',resetLabel:'↺',editLabel:'✏️',
+    moveLabel:'Move',
+    takeShift:'Take this shift',accept:'✓ Accept',decline:'✗ Decline',
+    giveAway:'🎁 Give away',swap:'⇄ Swap',cancel:'Cancel',cancelGiveaway:'Cancel giveaway',
+    availStatus:{available:'Available — awaiting claim',claimed:'Claimed — pending admin',completed:'✓ Completed',availAgain:'Available again'},
+    swapOutStatus:{waiting:'Waiting for ',declined:'Declined by ',adminPending:'Accepted — awaiting admin',adminApproved:'✓ Completed',adminRejected:'Rejected by admin'},
+    publishStatus:{published:'● Published',notPublished:'Not published'},
+    approvedCount:'approved',pendingCount:'pending',
+    needAttention:'Need attention',totalRequests:'Total requests',
+  }
+};
+function t(key){
+  const keys=key.split('.');
+  let obj=T[lang];
+  for(const k of keys){if(obj&&obj[k]!==undefined)obj=obj[k];else return key;}
+  return obj||key;
+}
+
+function applyLang(){
+  const isHe=lang==='he';
+  document.getElementById('html-root').setAttribute('lang',lang);
+  document.getElementById('html-root').setAttribute('dir',isHe?'rtl':'ltr');
+  document.body.classList.toggle('ltr',!isHe);
+  document.querySelectorAll('[id$="-lang-btn"]').forEach(b=>b.textContent=isHe?'EN':'עב');
+  document.querySelectorAll('.t[data-he]').forEach(el=>{
+    el.textContent=isHe?el.dataset.he:el.dataset.en;
+  });
+  // Update filter selects
+  populateFilterSelects();
+  populateDaySelect();
+  populateRShiftSelect();
+  populateRSpecSelect();
+  document.getElementById('sync-label').textContent=T[lang].live;
+  localStorage.setItem('clinicsched_lang',lang);
+}
+
+function toggleLang(){
+  lang=lang==='he'?'en':'he';
+  applyLang();
+  renderCal();
+  if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
+}
+
+function populateFilterSelects(){
+  const L=T[lang];
+  const fs=document.getElementById('f-status');if(fs){fs.innerHTML=`<option value="">${L.filterStatus}</option><option value="pending">${L.statuses.pending}</option><option value="approved">${L.statuses.approved}</option><option value="rejected">${L.statuses.rejected}</option>`;}
+  const fsp=document.getElementById('f-spec');if(fsp){fsp.innerHTML=`<option value="">${L.filterSpec}</option><option value="ortho">${L.specialty.ortho}</option><option value="pedia">${L.specialty.pedia}</option><option value="internal">${L.specialty.internal}</option>`;}
+  const fsh=document.getElementById('f-shift');if(fsh){fsh.innerHTML=`<option value="">${L.filterShift}</option><option value="regular">${L.shifts.regular}</option><option value="morning">${L.shifts.morning}</option><option value="evening">${L.shifts.evening}</option>`;}
+  // Repopulate doctor filter keeping current value
+  const fdoc=document.getElementById('f-doctor');if(fdoc){const cur=fdoc.value;fdoc.innerHTML=`<option value="">${L.filterDoctor}</option>`;getAllDocs().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;fdoc.appendChild(o);});fdoc.value=cur;}
+}
+
+function populateDaySelect(){
+  const sel=document.getElementById('r-day');if(!sel)return;
+  const L=T[lang];
+  sel.innerHTML=L.days.map((d,i)=>`<option value="${i}">${d}</option>`).join('');
+}
+function populateRShiftSelect(){
+  const sel=document.getElementById('r-shift');if(!sel)return;
+  const L=T[lang];
+  sel.innerHTML=`<option value="">${L.shifts.regular}</option><option value="morning">${L.shifts.morning}</option><option value="evening">${L.shifts.evening}</option>`;
+}
+function populateRSpecSelect(){
+  const sel=document.getElementById('r-spec');if(!sel)return;
+  const L=T[lang];
+  sel.innerHTML=`<option value="ortho">${L.specialty.ortho}</option><option value="pedia">${L.specialty.pedia}</option><option value="internal">${L.specialty.internal}</option>`;
+}
+function populateReportMonthSelect(){
+  const sel=document.getElementById('report-month');if(!sel||sel.options.length>1)return;
+  const L=T[lang];
+  for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-2+i,1);const val=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;const o=document.createElement('option');o.value=val;o.textContent=`${L.months[d.getMonth()]} ${d.getFullYear()}`;if(i===2)o.selected=true;sel.appendChild(o);}
+}
+function populateReportSpecSelect(){
+  const sel=document.getElementById('report-spec');if(!sel||sel.options.length>1)return;
+  const L=T[lang];
+  sel.innerHTML=`<option value="">${L.filterSpec}</option><option value="ortho">${L.specialty.ortho}</option><option value="pedia">${L.specialty.pedia}</option><option value="internal">${L.specialty.internal}</option>`;
+}
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const ADMIN_PW='Moked2026';
+const DEFAULT_PIN='1234';
+const DEFAULT_NEEDED={ZVULUN:2,LIN:1,TAMRA:2,KFARYASSIF:1};
+const SITES=['ZVULUN','LIN','TAMRA','KFARYASSIF'];
+
+let DOCS={ortho:[],pedia:[],internal:[]};
+let reqs=[],swaps=[],holidays=[],slotRules=[];
+let publishedMonths={};
+function loadPublished(){try{const s=localStorage.getItem('clinicsched_published');if(s)return JSON.parse(s);}catch(e){}return {};}
+function savePublished(){localStorage.setItem('clinicsched_published',JSON.stringify(publishedMonths));}
+publishedMonths=loadPublished();
+
+const now=new Date();
+let calY=now.getFullYear(),calM=now.getMonth()+1;
+let curDoc=null,curSpec=null,selDate=null,selShift='morning';
+let adminOk=false,pendBtn=null;
+let cflList=[],cflIdx=null,moveId=null;
+let pinBuffer='';
+let loginSelectedSpec='',loginSelectedName='';
+let volunteerSlot=null;
+
+// ══════════════════════════════════════
+// SLOT RULES
+// ══════════════════════════════════════
+function getNeeded(ds,site,sp,st){
+  const dow=new Date(ds+'T12:00:00').getDay();
+  const specific=slotRules.filter(r=>r.day_of_week===dow&&r.specialty===sp&&r.site===site&&r.shift_type==(st||null));
+  if(specific.length)return specific[0].doctors_needed;
+  const general=slotRules.filter(r=>r.day_of_week===dow&&r.specialty===sp&&r.site===site&&r.shift_type===null);
+  if(general.length)return general[0].doctors_needed;
+  return DEFAULT_NEEDED[site]||2;
+}
+
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+const pad=n=>String(n).padStart(2,'0');
+function toast(msg,d=2600){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),d);}
+function sync(on){document.getElementById('sync-dot').className='sync-dot'+(on?' syncing':'');document.getElementById('sync-label').textContent=on?T[lang].syncing:T[lang].live;}
+function showLoad(on,msg){const el=document.getElementById('loading-overlay');el.classList.toggle('show',on);document.getElementById('loading-msg').textContent=msg||T[lang].connecting;}
+const specLbl=s=>T[lang].specialty[s]||s;
+const specBadge=s=>`<span class="badge badge-${s}">${specLbl(s)}</span>`;
+const stBadge=s=>`<span class="badge badge-${s.replace(/ /g,'_')}">${T[lang].statuses[s]||s}</span>`;
+const siteBadge=s=>`<span class="tag-${s.toLowerCase()}">${s}</span>`;
+const shiftBadge=t=>t?`<span class="tag-${t}">${t==='morning'?'🌅 '+T[lang].shifts.morning:'🌙 '+T[lang].shifts.evening}</span>`:'';
+function isSpecial(ds){const dow=new Date(ds+'T12:00:00').getDay();return dow===5||dow===6||holidays.some(h=>h.date===ds);}
+function holName(ds){const h=holidays.find(h=>h.date===ds);return h?h.name:null;}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function getAllDocs(){return[...DOCS.ortho,...DOCS.pedia,...DOCS.internal];}
+function getDocPin(name){const d=getAllDocs().find(d=>d.name===name);return d?d.pin||DEFAULT_PIN:DEFAULT_PIN;}
+function getDocId(name){const d=getAllDocs().find(d=>d.name===name);return d?d.id:null;}
+function getDocSpec(name){for(const sp of Object.keys(DOCS)){if((DOCS[sp]||[]).find(d=>d.name===name))return sp;}return null;}
+function monthKey(y,m){return`${y}-${pad(m)}`;}
+function needBadgeClass(n){return n<=2?'need-2':n===3?'need-3':'need-4';}
+function shiftDesc(r){return`${r.date} · ${r.site}${r.shift_type?' · '+(r.shift_type==='morning'?'🌅':'🌙'):''}` ;}
+
+// ══════════════════════════════════════
+// DATA LOAD
+// ══════════════════════════════════════
+async function loadAll(){
+  sync(true);
+  try{
+    const docs=await dbGet('doctors');
+    DOCS={ortho:[],pedia:[],internal:[]};
+    docs.forEach(d=>{if(DOCS[d.specialty])DOCS[d.specialty].push(d);});
+    if(docs.length===0)await seedDefaultDoctors();
+    reqs=await dbGet('requests');
+    try{swaps=await dbGet('swaps');}catch(e){swaps=[];}
+    try{holidays=await dbGet('holidays');}catch(e){holidays=[];}
+    try{slotRules=await dbGet('slot_rules');}catch(e){slotRules=[];}
+    renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();
+    if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+  finally{sync(false);}
+}
+async function seedDefaultDoctors(){
+  const base={ortho:['Dr. Cohen A.','Dr. Levy B.','Dr. Ben-David C.','Dr. Katz D.','Dr. Shapiro E.','Dr. Mizrahi F.','Dr. Goldberg G.','Dr. Peretz H.','Dr. Azulay I.','Dr. Rotem J.','Dr. Segal K.','Dr. Dayan L.','Dr. Har-El M.','Dr. Biton N.','Dr. Erez O.'],pedia:['Dr. Friedman A.','Dr. Stern B.','Dr. Blum C.','Dr. Nir D.','Dr. Oren E.','Dr. Tal F.','Dr. Gal G.','Dr. Haim H.','Dr. Ziv I.','Dr. Bar J.','Dr. Lior K.','Dr. Mor L.','Dr. Noa M.','Dr. Paz N.','Dr. Raz O.'],internal:['Dr. Avraham A.','Dr. Ben-Ami B.','Dr. Carmi C.','Dr. Dror D.','Dr. Even E.','Dr. Frenkel F.','Dr. Goren G.','Dr. Halevi H.','Dr. Inbar I.','Dr. Jakobson J.','Dr. Kadosh K.','Dr. Lasri L.','Dr. Manor M.','Dr. Navon N.','Dr. Ofir O.']};
+  for(const sp of Object.keys(base))for(const name of base[sp]){try{const ins=await dbIns('doctors',{name,specialty:sp,pin:DEFAULT_PIN});DOCS[sp].push(ins[0]);}catch(e){}}
+}
+setInterval(loadAll,30000);
+
+function populateMonthFilters(){
+  const L=T[lang];
+  // Get all unique months from requests
+  const months=[...new Set(reqs.map(r=>r.date.substring(0,7)))].sort().reverse();
+  // Also always include current and next month
+  const cur=`${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  const next=now.getMonth()===11?`${now.getFullYear()+1}-01`:`${now.getFullYear()}-${pad(now.getMonth()+2)}`;
+  [cur,next].forEach(m=>{if(!months.includes(m))months.unshift(m);});
+  months.sort().reverse();
+
+  const allLabel=lang==='he'?'כל החודשים':'All months';
+  [
+    {id:'f-month', curVal:document.getElementById('f-month')?.value||''},
+    {id:'doc-f-month', curVal:document.getElementById('doc-f-month')?.value||''}
+  ].forEach(({id,curVal})=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    sel.innerHTML=`<option value="">${allLabel}</option>`;
+    months.forEach(mk=>{
+      const[y,m]=mk.split('-').map(Number);
+      const o=document.createElement('option');o.value=mk;
+      o.textContent=`${L.months[m-1]} ${y}`;
+      if(mk===curVal)o.selected=true;
+      sel.appendChild(o);
+    });
+    // Default to current month if nothing selected
+    if(!curVal&&months.includes(cur))sel.value=cur;
+  });
+}
+
+function populateDoctorFilter(){
+  const sel=document.getElementById('f-doctor');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">${T[lang].filterDoctor}</option>`;
+  getAllDocs().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;sel.appendChild(o);});
+  sel.value=cur;
+}
+function updateExchangeNotif(){
+  const btn=document.getElementById('ditab-exchange');if(!btn||!curDoc)return;
+  const n=swaps.filter(s=>s.type==='swap'&&s.target_doctor===curDoc&&s.target_approval==='pending').length+swaps.filter(s=>s.type==='giveaway'&&s.status==='giveaway'&&s.requester!==curDoc&&getDocSpec(s.requester)===curSpec).length;
+  const ex=btn.querySelector('.notif-badge');if(ex)ex.remove();
+  if(n>0){const b=document.createElement('span');b.className='notif-badge';b.textContent=n;btn.appendChild(b);}
+}
+
+// ══════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════
+function loginSpecChange(){
+  const sp=document.getElementById('login-specialty').value;loginSelectedSpec=sp;
+  const sel=document.getElementById('login-name');sel.innerHTML=`<option value="">${lang==='he'?'— בחר שם —':'— Select name —'}</option>`;
+  if(sp)(DOCS[sp]||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;sel.appendChild(o);});
+}
+function loginStep1Next(){
+  const sp=document.getElementById('login-specialty').value,name=document.getElementById('login-name').value;
+  if(!sp||!name){toast(lang==='he'?'נא לבחור התמחות ושם':'Please select specialty and name');return;}
+  loginSelectedSpec=sp;loginSelectedName=name;
+  document.getElementById('login-greeting').textContent=(lang==='he'?'שלום, ':'Hello, ')+name.replace('Dr.','')+' 👋';
+  document.getElementById('login-step1').style.display='none';
+  document.getElementById('login-step2').style.display='flex';
+  pinBuffer='';updatePinDisplay();document.getElementById('pin-error').textContent='';
+}
+function loginBack(){document.getElementById('login-step2').style.display='none';document.getElementById('login-step1').style.display='flex';pinBuffer='';}
+function pinKey(k){if(pinBuffer.length>=4)return;pinBuffer+=k;updatePinDisplay();if(pinBuffer.length===4)setTimeout(checkPin,120);}
+function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updatePinDisplay();}
+function updatePinDisplay(){for(let i=0;i<4;i++)document.getElementById('pd'+i).className='pin-dot'+(i<pinBuffer.length?' filled':'');}
+function checkPin(){
+  if(pinBuffer===getDocPin(loginSelectedName)){
+    curDoc=loginSelectedName;curSpec=loginSelectedSpec;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('doc-bar-name').textContent=curDoc;
+    document.getElementById('doc-bar-info').textContent=specLbl(curSpec)+' · '+(lang==='he'?'מחובר':'Logged in');
+    renderCal();renderMyReqs();renderExchangeTab();updateExchangeNotif();
+    toast((lang==='he'?'ברוך הבא ':'Welcome ')+curDoc.replace('Dr.','')+' ✓');
+  }else{document.getElementById('pin-error').textContent='❌ '+T[lang].pinWrong;pinBuffer='';updatePinDisplay();}
+}
+function logoutDoctor(){
+  curDoc=null;curSpec=null;pinBuffer='';
+  document.getElementById('login-specialty').value='';
+  document.getElementById('login-name').innerHTML=`<option value="">${lang==='he'?'— בחר שם —':'— Select name —'}</option>`;
+  document.getElementById('login-step1').style.display='flex';document.getElementById('login-step2').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.querySelectorAll('.view-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-doctor').classList.add('active');
+}
+function openChangePinModal(){document.getElementById('cp-current').value='';document.getElementById('cp-new').value='';document.getElementById('cp-confirm').value='';document.getElementById('cp-error').style.display='none';openModal('modal-changepin');}
+async function changePinSubmit(){
+  const curr=document.getElementById('cp-current').value,nw=document.getElementById('cp-new').value,conf=document.getElementById('cp-confirm').value;
+  const err=document.getElementById('cp-error');
+  if(curr!==getDocPin(curDoc)){err.textContent=T[lang].pinWrongCurrent;err.style.display='block';return;}
+  if(!/^\d{4}$/.test(nw)){err.textContent=T[lang].pin4digits;err.style.display='block';return;}
+  if(nw!==conf){err.textContent=T[lang].pinNoMatch;err.style.display='block';return;}
+  const docId=getDocId(curDoc);
+  if(docId){try{await dbUpd('doctors',docId,{pin:nw});const d=getAllDocs().find(d=>d.name===curDoc);if(d)d.pin=nw;closeModal('modal-changepin');toast(T[lang].pinChanged);}catch(e){toast(T[lang].errorPrefix+e.message);}}
+}
+
+// ══════════════════════════════════════
+// PANEL / TAB NAV
+// ══════════════════════════════════════
+function showPanel(name,btn){
+  if(name==='admin'&&!adminOk){
+    pendBtn=btn;document.getElementById('pw-input').value='';document.getElementById('pw-error').style.display='none';
+    document.getElementById('pw-screen').style.display='flex';setTimeout(()=>document.getElementById('pw-input').focus(),100);return;
+  }
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.view-tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='admin')renderAdmin();
+}
+function checkPw(){
+  if(document.getElementById('pw-input').value===ADMIN_PW){adminOk=true;document.getElementById('pw-screen').style.display='none';showPanel('admin',pendBtn);}
+  else{document.getElementById('pw-error').style.display='block';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
+}
+function cancelAdmin(){document.getElementById('pw-screen').style.display='none';document.querySelectorAll('.view-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));}
+function showDocTab(name){
+  ['myshifts','finalschedule','exchange'].forEach(t=>{
+    document.getElementById('dtab-'+t).style.display=t===name?'':'none';
+    const b=document.getElementById('ditab-'+t);if(b)b.classList.toggle('active',t===name);
+  });
+  if(name==='finalschedule')renderFinalScheduleDoctor();
+  if(name==='exchange')renderExchangeTab();
+}
+function showAdminTab(name){
+  ['req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'':'none';
+    const b=document.getElementById('itab-'+t);if(b)b.classList.toggle('active',t===name);
+  });
+  if(name==='sched'){populateSchedMonths();renderSchedule();}
+  if(name==='publish')renderPublishTab();
+  if(name==='report'){populateReportMonthSelect();populateReportSpecSelect();renderReport();}
+  if(name==='conflicts')renderConflicts();
+  if(name==='exchange')renderAdminExchange();
+  if(name==='rules')renderRules();
+  if(name==='holidays')renderHolidays();
+  if(name==='doctors')renderDoctors();
+  if(name==='links')renderLinks();
+}
+
+// ══════════════════════════════════════
+// CALENDAR
+// ══════════════════════════════════════
+function prevMonth(){calM--;if(calM<1){calM=12;calY--;}renderCal();}
+function nextMonth(){calM++;if(calM>12){calM=1;calY++;}renderCal();}
+function renderCal(){
+  const L=T[lang];
+  document.getElementById('cal-label').textContent=`${L.months[calM-1]} ${calY}`;
+  // Headers
+  const hdrs=document.getElementById('cal-headers-row');hdrs.innerHTML='';
+  L.calHeader.forEach(d=>{const el=document.createElement('div');el.className='cal-header';el.textContent=d;hdrs.appendChild(el);});
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  const first=new Date(calY,calM-1,1).getDay(),dim=new Date(calY,calM,0).getDate();
+  const todayStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  for(let i=0;i<first;i++){const b=document.createElement('div');b.className='cal-day empty';grid.appendChild(b);}
+  for(let d=1;d<=dim;d++){
+    const ds=`${calY}-${pad(calM)}-${pad(d)}`;const dow=new Date(ds+'T12:00:00').getDay();
+    const special=isSpecial(ds);const past=ds<todayStr;
+    const cell=document.createElement('div');
+    cell.className='cal-day'+(past?' past':'')+(ds===todayStr?' today':'')+(special?' special':'');
+    const dn=document.createElement('div');dn.className='day-num';dn.textContent=d;
+    dn.style.color=dow===6?'var(--accent)':dow===5?'var(--danger)':'var(--text2)';cell.appendChild(dn);
+    const hn=holName(ds);
+    if(hn||dow===5||dow===6){const l=document.createElement('div');l.className='day-label';l.textContent=hn||(dow===5?L.friday:L.saturday);cell.appendChild(l);}
+    const sl=document.createElement('div');sl.className='shifts-list';
+    reqs.filter(r=>r.date===ds&&r.doctor===curDoc).forEach(r=>{
+      const ch=document.createElement('span');ch.className=`shift-chip chip-${r.status}`;
+      ch.textContent=`${r.site}${r.shift_type?' '+(r.shift_type==='morning'?'🌅':'🌙'):''} ${r.status==='approved'?'✓':r.status==='rejected'?'✗':'…'}`;
+      sl.appendChild(ch);
+    });
+    cell.appendChild(sl);
+    if(!past)cell.onclick=()=>openShiftModal(d,ds,special);
+    grid.appendChild(cell);
+  }
+}
+function selectShift(st){selShift=st;document.getElementById('btn-morning').classList.toggle('active',st==='morning');document.getElementById('btn-evening').classList.toggle('active',st==='evening');}
+function openShiftModal(d,ds,special){
+  if(!curDoc){toast(lang==='he'?'נא להתחבר תחילה':'Please log in first');return;}
+  selDate=ds;selShift='morning';
+  const L=T[lang];
+  document.getElementById('m-date').value=`${L.months[calM-1]} ${d}, ${calY}`;
+  document.getElementById('modal-shift-title').textContent=lang==='he'?'בקשת משמרת':'Request a shift';
+  document.getElementById('m-warn').style.display='none';
+  document.getElementById('m-shift-row').style.display=special?'flex':'none';
+  selectShift('morning');
+  const btn=document.getElementById('submit-btn');btn.disabled=false;
+  btn.innerHTML=lang==='he'?'שלח בקשה':'Submit request';
+  openModal('modal-shift');
+}
+async function submitRequest(){
+  const site=document.getElementById('m-site').value;
+  const shiftType=isSpecial(selDate)?selShift:null;
+  if(reqs.find(r=>r.doctor===curDoc&&r.date===selDate&&r.site===site&&r.shift_type==shiftType)){
+    const w=document.getElementById('m-warn');w.textContent=T[lang].slotExists;w.style.display='block';return;
+  }
+  const btn=document.getElementById('submit-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  try{
+    const ins=await dbIns('requests',{doctor:curDoc,specialty:curSpec,date:selDate,site,status:'pending',shift_type:shiftType});
+    reqs.push(ins[0]);closeModal('modal-shift');renderCal();renderMyReqs();toast(T[lang].requestSent);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+  finally{btn.disabled=false;btn.textContent=lang==='he'?'שלח בקשה':'Submit request';}
+}
+
+function renderMyReqs(){
+  const wrap=document.getElementById('my-requests');
+  const fMonth=document.getElementById('doc-f-month')?.value||'';
+  const mine=reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&(!fMonth||r.date.startsWith(fMonth))).sort((a,b)=>a.date.localeCompare(b.date));
+  const pending=reqs.filter(r=>r.doctor===curDoc&&r.status==='pending'&&(!fMonth||r.date.startsWith(fMonth))).sort((a,b)=>a.date.localeCompare(b.date));
+  const L=T[lang];
+  if(!mine.length&&!pending.length){wrap.innerHTML=`<div class="empty-state"><div class="icon">📋</div>${lang==='he'?'לחץ על יום בלוח לבקש משמרת':'Click a day on the calendar to request a shift'}</div>`;return;}
+  let h='';
+  if(mine.length){
+    h+=`<table class="req-table"><thead><tr><th>${lang==='he'?'תאריך':'Date'}</th><th>${lang==='he'?'אתר':'Site'}</th><th>${lang==='he'?'משמרת':'Shift'}</th><th>${lang==='he'?'סטטוס':'Status'}</th><th></th></tr></thead><tbody>`;
+    mine.forEach(r=>{
+      const activeGiveaway=swaps.find(s=>s.type==='giveaway'&&s.requester_req_id===r.id&&['giveaway','claimed'].includes(s.status));
+      let statusDisplay=stBadge(r.status);
+      if(activeGiveaway){statusDisplay=activeGiveaway.status==='giveaway'?`<span class="badge badge-giveaway">🎁 ${L.statuses.giveaway}</span>`:`<span class="badge badge-claimed">${L.statuses.claimed}</span>`;}
+      h+=`<tr><td style="font-family:'DM Mono',monospace;font-size:11px">${r.date}</td>
+      <td>${siteBadge(r.site)}</td>
+      <td>${r.shift_type?shiftBadge(r.shift_type):`<span style="color:var(--text3);font-size:11px">${L.shifts.regular}</span>`}</td>
+      <td>${statusDisplay}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        ${!activeGiveaway?`<button class="btn btn-ghost btn-sm" onclick="openGiveawayModal(${r.id})">${L.giveAway}</button>`:''}
+        ${!activeGiveaway?`<button class="btn btn-ghost btn-sm" onclick="openSwapModal(${r.id})">${L.swap}</button>`:''}
+        ${activeGiveaway&&activeGiveaway.status==='giveaway'?`<button class="btn btn-danger btn-sm" onclick="cancelGiveaway(${activeGiveaway.id})">${L.cancelGiveaway}</button>`:''}
+      </td></tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  if(pending.length){
+    h+=`<div style="font-size:12px;font-weight:600;color:var(--text2);margin-top:12px;margin-bottom:6px">${lang==='he'?'בקשות ממתינות':'Pending requests'}</div>`;
+    h+=`<table class="req-table"><thead><tr><th>${lang==='he'?'תאריך':'Date'}</th><th>${lang==='he'?'אתר':'Site'}</th><th>${lang==='he'?'משמרת':'Shift'}</th><th>${lang==='he'?'סטטוס':'Status'}</th><th></th></tr></thead><tbody>`;
+    pending.forEach(r=>{
+      h+=`<tr><td style="font-family:'DM Mono',monospace;font-size:11px">${r.date}</td>
+      <td>${siteBadge(r.site)}</td>
+      <td>${r.shift_type?shiftBadge(r.shift_type):`<span style="color:var(--text3);font-size:11px">${L.shifts.regular}</span>`}</td>
+      <td>${stBadge(r.status)}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="cancelReq(${r.id})">${L.cancel}</button></td></tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  wrap.innerHTML=h;
+}
+async function cancelReq(id){try{await dbDel('requests',id);reqs=reqs.filter(r=>r.id!==id);renderCal();renderMyReqs();toast(T[lang].cancelled);}catch(e){toast(T[lang].errorPrefix+e.message);}}
+
+// ══════════════════════════════════════
+// GIVE AWAY
+// ══════════════════════════════════════
+function openGiveawayModal(reqId){
+  const sel=document.getElementById('ga-shift');sel.innerHTML='';
+  const givenIds=swaps.filter(s=>s.type==='giveaway'&&s.requester===curDoc&&['giveaway','claimed'].includes(s.status)).map(s=>s.requester_req_id);
+  const available=reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&!givenIds.includes(r.id));
+  if(!available.length){toast(lang==='he'?'אין משמרות אושרות למסירה':'No eligible approved shifts');return;}
+  available.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);if(r.id===reqId)o.selected=true;sel.appendChild(o);});
+  document.getElementById('ga-reason').value='';
+  openModal('modal-giveaway');
+}
+async function submitGiveaway(){
+  const reqId=parseInt(document.getElementById('ga-shift').value);
+  const reason=document.getElementById('ga-reason').value.trim();
+  const r=reqs.find(r=>r.id===reqId);if(!r)return;
+  try{
+    const row={type:'giveaway',requester:curDoc,requester_req_id:reqId,specialty:curSpec,status:'giveaway',target_approval:'n/a',admin_status:'pending',note:`${curDoc}: ${shiftDesc(r)}${reason?' — '+reason:''}`};
+    const ins=await dbIns('swaps',row);swaps.push(ins[0]);
+    closeModal('modal-giveaway');renderMyReqs();renderExchangeTab();toast(T[lang].giveawaySent);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function cancelGiveaway(swapId){
+  try{await dbDel('swaps',swapId);swaps=swaps.filter(s=>s.id!==swapId);renderMyReqs();renderExchangeTab();toast(T[lang].cancelled);}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function claimGiveaway(swapId){
+  const s=swaps.find(s=>s.id===swapId);if(!s)return;
+  try{
+    await dbUpd('swaps',swapId,{status:'claimed',target_doctor:curDoc,note:s.note+` → ${lang==='he'?'נתבע':'claimed'} ${curDoc}`});
+    s.status='claimed';s.target_doctor=curDoc;
+    renderExchangeTab();updateExchangeNotif();toast(T[lang].claimSent);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+
+// ══════════════════════════════════════
+// SWAP
+// ══════════════════════════════════════
+function openSwapModal(myId){
+  const my=document.getElementById('sw-my');my.innerHTML='';
+  const givenIds=swaps.filter(s=>s.type==='giveaway'&&s.requester===curDoc&&['giveaway','claimed'].includes(s.status)).map(s=>s.requester_req_id);
+  reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&!givenIds.includes(r.id)).forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);if(r.id===myId)o.selected=true;my.appendChild(o);});
+  const other=document.getElementById('sw-other');
+  other.innerHTML=`<option value="">${lang==='he'?'— בחר רופא —':'— Select doctor —'}</option>`;
+  (DOCS[curSpec]||[]).filter(d=>d.name!==curDoc).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;other.appendChild(o);});
+  other.onchange=()=>{
+    const their=document.getElementById('sw-their');their.innerHTML=`<option value="">${lang==='he'?'— כל משמרת —':'— Any shift —'}</option>`;
+    reqs.filter(r=>r.doctor===other.value&&r.status==='approved').forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);their.appendChild(o);});
+  };
+  openModal('modal-swap');
+}
+async function submitSwap(){
+  const myId=document.getElementById('sw-my').value,otherDoc=document.getElementById('sw-other').value,theirId=document.getElementById('sw-their').value;
+  if(!myId||!otherDoc){toast(lang==='he'?'נא למלא את כל השדות':'Please fill in required fields');return;}
+  const myReq=reqs.find(r=>r.id==myId);
+  try{
+    const row={type:'swap',requester:curDoc,requester_req_id:parseInt(myId),target_doctor:otherDoc,target_req_id:theirId?parseInt(theirId):null,specialty:curSpec,status:'swap_pending',target_approval:'pending',admin_status:'pending',note:`${curDoc} ⇄ ${otherDoc}: ${shiftDesc(myReq)}`};
+    const ins=await dbIns('swaps',row);swaps.push(ins[0]);closeModal('modal-swap');renderMyReqs();renderExchangeTab();toast(T[lang].swapSent);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function respondSwap(swapId,accepted){
+  const s=swaps.find(s=>s.id===swapId);if(!s)return;
+  if(accepted){
+    await dbUpd('swaps',swapId,{target_approval:'accepted',status:'swap_pending'});
+    s.target_approval='accepted';toast(T[lang].swapAccepted);
+  }else{
+    await dbUpd('swaps',swapId,{target_approval:'declined',status:'swap_rejected'});
+    s.target_approval='declined';s.status='swap_rejected';toast(T[lang].swapDeclined);
+  }
+  renderExchangeTab();updateExchangeNotif();
+}
+
+// ══════════════════════════════════════
+// EXCHANGE TAB (DOCTOR)
+// ══════════════════════════════════════
+function renderExchangeTab(){renderAvailableShifts();renderIncomingSwaps();renderOutgoingRequests();updateExchangeNotif();}
+
+function renderAvailableShifts(){
+  const wrap=document.getElementById('available-shifts-list');
+  const available=swaps.filter(s=>s.type==='giveaway'&&s.status==='giveaway'&&s.requester!==curDoc&&getDocSpec(s.requester)===curSpec);
+  if(!available.length){wrap.innerHTML=`<div class="empty-state" style="padding:20px"><div class="icon">🎁</div>${T[lang].noAvailable}</div>`;return;}
+  wrap.innerHTML=available.map(s=>{
+    const r=reqs.find(r=>r.id===s.requester_req_id);
+    return`<div class="avail-card">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#5b21b6">🎁 ${s.requester}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${r?shiftDesc(r):'—'} · ${specLbl(curSpec)}</div>
+        ${s.note&&s.note.includes('—')?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${s.note.split('—').slice(1).join('—').trim()}</div>`:''}
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="claimGiveaway(${s.id})">${T[lang].takeShift}</button>
+    </div>`;
+  }).join('');
+}
+
+function renderIncomingSwaps(){
+  const wrap=document.getElementById('incoming-swaps-list');
+  const incoming=swaps.filter(s=>s.type==='swap'&&s.target_doctor===curDoc&&s.target_approval==='pending');
+  if(!incoming.length){wrap.innerHTML=`<div class="empty-state" style="padding:20px"><div class="icon">⇄</div>${T[lang].noIncoming}</div>`;return;}
+  wrap.innerHTML=incoming.map(s=>{
+    const myR=reqs.find(r=>r.id===s.target_req_id);const theirR=reqs.find(r=>r.id===s.requester_req_id);
+    return`<div class="swap-req-card">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent)">⇄ ${s.requester}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${lang==='he'?'המשמרת שלהם:':'Their shift:'} <strong>${theirR?shiftDesc(theirR):'—'}</strong></div>
+        ${myR?`<div style="font-size:12px;color:var(--text2)">${lang==='he'?'רוצים את:':'Wants your:'} <strong>${shiftDesc(myR)}</strong></div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-success btn-sm" onclick="respondSwap(${s.id},true)">${T[lang].accept}</button>
+        <button class="btn btn-danger btn-sm" onclick="respondSwap(${s.id},false)">${T[lang].decline}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOutgoingRequests(){
+  const wrap=document.getElementById('my-outgoing-list');
+  const outgoing=swaps.filter(s=>s.requester===curDoc);
+  if(!outgoing.length){wrap.innerHTML=`<div class="empty-state" style="padding:20px"><div class="icon">📤</div>${T[lang].noOutgoing}</div>`;return;}
+  const L=T[lang];
+  let h=`<table class="req-table"><thead><tr><th>${lang==='he'?'סוג':'Type'}</th><th>${lang==='he'?'פרטים':'Details'}</th><th>${lang==='he'?'סטטוס':'Status'}</th><th></th></tr></thead><tbody>`;
+  outgoing.forEach(s=>{
+    const typeLabel=s.type==='giveaway'?'🎁':'⇄';
+    let statusLabel,badgeClass,canCancel=false;
+    if(s.type==='giveaway'){
+      if(s.status==='giveaway'){statusLabel=L.availStatus.available;badgeClass='giveaway';canCancel=true;}
+      else if(s.status==='claimed'&&s.admin_status==='pending'){statusLabel=L.availStatus.claimed;badgeClass='claimed';}
+      else if(s.status==='swap_approved'){statusLabel=L.availStatus.completed;badgeClass='approved';}
+      else{statusLabel=L.availStatus.availAgain;badgeClass='giveaway';canCancel=true;}
+    }else{
+      if(s.target_approval==='pending'){statusLabel=L.swapOutStatus.waiting+s.target_doctor;badgeClass='swap_pending';canCancel=true;}
+      else if(s.target_approval==='declined'){statusLabel=L.swapOutStatus.declined+s.target_doctor;badgeClass='swap_rejected';}
+      else if(s.target_approval==='accepted'&&s.admin_status==='pending'){statusLabel=L.swapOutStatus.adminPending;badgeClass='swap_pending';}
+      else if(s.admin_status==='approved'||s.status==='swap_approved'){statusLabel=L.swapOutStatus.adminApproved;badgeClass='approved';}
+      else{statusLabel=L.swapOutStatus.adminRejected;badgeClass='swap_rejected';}
+    }
+    h+=`<tr><td>${typeLabel}</td><td style="font-size:12px">${s.note||'—'}</td>
+    <td><span class="badge badge-${badgeClass}">${statusLabel}</span></td>
+    <td>${canCancel?`<button class="btn btn-danger btn-sm" onclick="cancelExchangeReq(${s.id})">${L.cancel}</button>`:''}</td></tr>`;
+  });
+  wrap.innerHTML=h+'</tbody></table>';
+}
+async function cancelExchangeReq(id){try{await dbDel('swaps',id);swaps=swaps.filter(s=>s.id!==id);renderExchangeTab();renderMyReqs();toast(T[lang].cancelled);}catch(e){toast(T[lang].errorPrefix+e.message);}}
+
+// ══════════════════════════════════════
+// FINAL SCHEDULE (DOCTOR)
+// ══════════════════════════════════════
+function renderFinalScheduleDoctor(){
+  const container=document.getElementById('final-sched-container');
+  const pubMonths=Object.entries(publishedMonths).filter(([k,v])=>v).map(([k])=>k).sort();
+  if(!pubMonths.length){container.innerHTML=`<div class="card"><div class="empty-state"><div class="icon">📅</div>${T[lang].noSchedule}</div></div>`;return;}
+  container.innerHTML=pubMonths.map(mk=>{const[y,m]=mk.split('-').map(Number);return buildFinalHTML(y,m);}).join('');
+}
+function buildFinalHTML(y,m){
+  const L=T[lang];const dim=new Date(y,m,0).getDate();
+  const specs=['ortho','pedia','internal'];const specShort={ortho:lang==='he'?'אורתו':'Ortho',pedia:lang==='he'?'ילדים':'Pedia',internal:lang==='he'?'פנימית':'Int'};const sites=SITES;
+  let html=`<div class="card" style="margin-bottom:12px">
+    <div style="font-size:15px;font-weight:600;margin-bottom:8px">${L.months[m-1]} ${y} — ${lang==='he'?'לוח סופי':'Final Schedule'} <span style="font-size:12px;font-weight:400;color:var(--success)">✓ ${lang==='he'?'פורסם':'Published'}</span></div>
+    <div class="legend">
+      <div class="legend-item"><span class="fs-slot-z" style="font-size:10px">${lang==='he'?'שם':'Name'}</span> ZVULUN</div>
+      <div class="legend-item"><span class="fs-slot-l" style="font-size:10px">${lang==='he'?'שם':'Name'}</span> LIN</div>
+      <div class="legend-item"><span class="fs-slot-giveaway" style="font-size:10px;cursor:default">${lang==='he'?'שם':'Name'} 🎁</span> ${lang==='he'?'למסירה':'Giveaway'}</div>
+      <div class="legend-item"><span class="fs-slot-empty" style="font-size:10px;cursor:default">+ ${lang==='he'?'פנוי':'Empty'}</span> ${lang==='he'?'התנדב':'Volunteer'}</div>
+      <div class="legend-item" style="margin-inline-start:auto"><span style="font-size:10px;background:var(--accent-light);border:2px solid var(--accent);border-radius:4px;padding:1px 6px;color:var(--accent)">★ ${lang==='he'?'אתה':'You'}</span></div>
+    </div>
+    <div class="final-sched-scroll" style="margin-top:10px">
+    <table class="final-sched-table"><thead><tr><th>${lang==='he'?'תאריך':'Date'}</th>`;
+  sites.forEach(site=>specs.forEach(sp=>{html+=`<th><span class="tag-${site.toLowerCase()}">${site[0]}</span> ${specShort[sp]}</th>`;}));
+  html+='</tr></thead><tbody>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${pad(m)}-${pad(d)}`;const dow=new Date(ds+'T12:00:00').getDay();
+    const special=isSpecial(ds);const hn=holName(ds);const isWk=dow===5||dow===6;
+    const hasMyShift=reqs.some(r=>r.date===ds&&r.doctor===curDoc&&r.status==='approved');
+    const rc=hasMyShift?'my-shift-row':(hn?'holiday-row':(isWk?'weekend-row':''));
+    if(special){
+      ['morning','evening'].forEach((st,si)=>{
+        html+=`<tr class="${rc}">`;
+        if(si===0)html+=`<td class="date-cell" rowspan="2" style="vertical-align:middle"><strong>${ds}</strong><br><span style="color:var(--text3)">${L.days[dow]}</span>${hn?`<br><span style="color:var(--warn);font-size:9px">${hn}</span>`:''}${hasMyShift?`<br><span style="color:var(--accent);font-size:9px;font-weight:600">● ${lang==='he'?'שלך':'Yours'}</span>`:''}</td>`;
+        sites.forEach(site=>{specs.forEach(sp=>{
+          const n=getNeeded(ds,site,sp,st);
+          const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type===st);
+          let cell=`<div style="font-size:9px;color:var(--text3);margin-bottom:1px">${st==='morning'?'🌅':'🌙'}(${n})</div>`;
+          appr.forEach(r=>{const isMe=r.doctor===curDoc;const sn=r.doctor.replace('Dr. ','').split(' ')[0];const ga=swaps.find(s=>s.type==='giveaway'&&s.requester_req_id===r.id&&s.status==='giveaway');if(ga)cell+=`<span class="fs-slot-giveaway">${sn}🎁</span>`;else cell+=`<span class="fs-slot-${site[0].toLowerCase()}${isMe?' fs-slot-mine':''}">${isMe?'★'+sn:sn}</span>`;});
+          for(let i=appr.length;i<n;i++)cell+=`<span class="fs-slot-empty" onclick="openVolunteer('${ds}','${site}','${sp}','${st}')">+</span>`;
+          html+=`<td>${cell}</td>`;
+        });});html+='</tr>';
+      });
+    }else{
+      html+=`<tr class="${rc}"><td class="date-cell"><strong>${ds}</strong><br><span style="color:var(--text3)">${L.days[dow]}</span>${hasMyShift?`<br><span style="color:var(--accent);font-size:9px;font-weight:600">● ${lang==='he'?'שלך':'Yours'}</span>`:''}</td>`;
+      sites.forEach(site=>{specs.forEach(sp=>{
+        const n=getNeeded(ds,site,sp,null);
+        const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&!r.shift_type);
+        let cell='';
+        appr.forEach(r=>{const isMe=r.doctor===curDoc;const sn=r.doctor.replace('Dr. ','').split(' ')[0];const ga=swaps.find(s=>s.type==='giveaway'&&s.requester_req_id===r.id&&s.status==='giveaway');if(ga)cell+=`<span class="fs-slot-giveaway">${sn}🎁</span>`;else cell+=`<span class="fs-slot-${site[0].toLowerCase()}${isMe?' fs-slot-mine':''}">${isMe?'★'+sn:sn}</span>`;});
+        for(let i=appr.length;i<n;i++)cell+=`<span class="fs-slot-empty" onclick="openVolunteer('${ds}','${site}','${sp}',null)">+</span>`;
+        html+=`<td>${cell}</td>`;
+      });});html+='</tr>';
+    }
+  }
+  return html+'</tbody></table></div></div>';
+}
+function openVolunteer(date,site,specialty,shiftType){
+  if(!curDoc){toast(lang==='he'?'נא להתחבר':'Please log in');return;}
+  volunteerSlot={date,site,specialty,shift_type:shiftType==='null'?null:shiftType};
+  const shiftStr=shiftType&&shiftType!=='null'?` (${shiftType==='morning'?'🌅':'🌙'})`:'';
+  document.getElementById('volunteer-info').innerHTML=`<strong>${date}</strong> · <span class="tag-${site.toLowerCase()}">${site}</span> · ${specLbl(specialty)}${shiftStr}`;
+  openModal('modal-volunteer');
+}
+async function submitVolunteer(){
+  if(!volunteerSlot)return;
+  const{date,site,specialty,shift_type}=volunteerSlot;
+  if(reqs.find(r=>r.doctor===curDoc&&r.date===date&&r.site===site&&r.shift_type==shift_type)){toast(T[lang].slotExists);closeModal('modal-volunteer');return;}
+  try{
+    const ins=await dbIns('requests',{doctor:curDoc,specialty:curSpec,date,site,status:'pending',shift_type});
+    reqs.push(ins[0]);closeModal('modal-volunteer');renderMyReqs();renderFinalScheduleDoctor();toast(T[lang].requestSent);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+
+// ══════════════════════════════════════
+// MONTHLY REPORT
+// ══════════════════════════════════════
+function renderReport(){
+  const selM=document.getElementById('report-month');const selSp=document.getElementById('report-spec');
+  if(!selM||!selSp)return;
+  const mk=selM.value;const specFilter=selSp.value;
+  if(!mk)return;
+  const[y,m]=mk.split('-').map(Number);
+  const L=T[lang];
+
+  // Filter approved requests for this month
+  const monthReqs=reqs.filter(r=>r.status==='approved'&&r.date.startsWith(mk)&&(!specFilter||r.specialty===specFilter));
+
+  // Summary stats
+  const totalShifts=monthReqs.length;
+  const specs=specFilter?[specFilter]:['ortho','pedia','internal'];
+  const allDoctors=getAllDocs().filter(d=>!specFilter||d.specialty===specFilter);
+  const avgPerDoc=allDoctors.length?Math.round(totalShifts/allDoctors.length*10)/10:0;
+
+  // Count empty slots
+  const dim=new Date(y,m,0).getDate();let emptySlots=0;
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${pad(m)}-${pad(d)}`;const special=isSpecial(ds);
+    const shiftTypes=special?['morning','evening']:[null];
+    SITES.forEach(site=>{specs.forEach(sp=>{shiftTypes.forEach(st=>{
+      const n=getNeeded(ds,site,sp,st);
+      const filled=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type==st).length;
+      if(filled<n)emptySlots+=n-filled;
+    });});});
+  }
+
+  document.getElementById('report-summary').innerHTML=`
+    <div class="report-summary-card"><div class="report-summary-num" style="color:var(--accent)">${totalShifts}</div><div class="report-summary-label">${L.report.totalShifts}</div></div>
+    <div class="report-summary-card"><div class="report-summary-num" style="color:var(--success)">${avgPerDoc}</div><div class="report-summary-label">${L.report.avgPerDoc}</div></div>
+    <div class="report-summary-card"><div class="report-summary-num" style="color:${emptySlots>0?'var(--danger)':'var(--success)'}">${emptySlots}</div><div class="report-summary-label">${L.report.emptySlots}</div></div>`;
+
+  // Per-doctor breakdown (generic over all clinics in SITES)
+  const docRows=allDoctors.sort((a,b)=>a.name.localeCompare(b.name)).map(doc=>{
+    const docReqs=monthReqs.filter(r=>r.doctor===doc.name);
+    const bySite={};
+    SITES.forEach(site=>{
+      bySite[site]={
+        reg:docReqs.filter(r=>r.site===site&&!r.shift_type).length,
+        morn:docReqs.filter(r=>r.site===site&&r.shift_type==='morning').length,
+        eve:docReqs.filter(r=>r.site===site&&r.shift_type==='evening').length
+      };
+    });
+    const total=docReqs.length;
+    const countClass=total===0?'count-0':total<=3?'count-low':total<=6?'count-mid':'count-high';
+    return{doc,bySite,total,countClass};
+  });
+
+  const totals={total:0};SITES.forEach(site=>totals[site]={reg:0,morn:0,eve:0});
+  docRows.forEach(r=>{SITES.forEach(site=>{totals[site].reg+=r.bySite[site].reg;totals[site].morn+=r.bySite[site].morn;totals[site].eve+=r.bySite[site].eve;});totals.total+=r.total;});
+
+  const cntBadge=(n,cls)=>`<span class="shift-count ${cls||('count-'+  (n===0?'0':n<=3?'low':n<=6?'mid':'high'))}">${n}</span>`;
+
+  let h=`<table class="report-table"><thead><tr>
+    <th>${L.report.doctor}</th>`;
+  SITES.forEach(site=>{
+    h+=`<th><span class="tag-${site.toLowerCase()}">${site[0]}</span> ${L.report.regular}</th>
+    <th><span class="tag-${site.toLowerCase()}">${site[0]}</span> 🌅</th>
+    <th><span class="tag-${site.toLowerCase()}">${site[0]}</span> 🌙</th>`;
+  });
+  h+=`<th>${L.report.total}</th>
+  </tr></thead><tbody>`;
+
+  docRows.forEach(r=>{
+    h+=`<tr>
+      <td><strong>${r.doc.name}</strong><br><span style="font-size:10px;color:var(--text3)">${specLbl(r.doc.specialty)}</span></td>`;
+    SITES.forEach(site=>{const b=r.bySite[site];h+=`<td>${cntBadge(b.reg)}</td><td>${cntBadge(b.morn)}</td><td>${cntBadge(b.eve)}</td>`;});
+    h+=`<td><span class="shift-count ${r.countClass}">${r.total}</span></td>
+    </tr>`;
+  });
+
+  h+=`<tr class="total-row">
+    <td><strong>${L.report.total}</strong></td>`;
+  SITES.forEach(site=>{const b=totals[site];h+=`<td>${cntBadge(b.reg)}</td><td>${cntBadge(b.morn)}</td><td>${cntBadge(b.eve)}</td>`;});
+  h+=`<td><span class="shift-count count-high">${totals.total}</span></td>
+  </tr></tbody></table>`;
+
+  document.getElementById('report-table-wrap').innerHTML=h;
+}
+
+function exportReportCSV(){
+  const selM=document.getElementById('report-month');const selSp=document.getElementById('report-spec');
+  if(!selM)return;
+  const mk=selM.value;const specFilter=selSp?selSp.value:'';
+  const L=T[lang];
+  const monthReqs=reqs.filter(r=>r.status==='approved'&&r.date.startsWith(mk)&&(!specFilter||r.specialty===specFilter));
+  const allDoctors=getAllDocs().filter(d=>!specFilter||d.specialty===specFilter).sort((a,b)=>a.name.localeCompare(b.name));
+
+  const header=[L.report.doctor,L.report.spec];
+  SITES.forEach(site=>{const nm=L.report[site.toLowerCase()]||site;header.push(`${nm} ${L.report.regular}`,`${nm} ${L.shifts.morning}`,`${nm} ${L.shifts.evening}`);});
+  header.push(L.report.total);
+  const headerLine=header.join(',');
+
+  const rows=allDoctors.map(doc=>{
+    const dr=monthReqs.filter(r=>r.doctor===doc.name);
+    const cells=[`"${doc.name}"`,`"${specLbl(doc.specialty)}"`];
+    SITES.forEach(site=>{
+      cells.push(dr.filter(r=>r.site===site&&!r.shift_type).length);
+      cells.push(dr.filter(r=>r.site===site&&r.shift_type==='morning').length);
+      cells.push(dr.filter(r=>r.site===site&&r.shift_type==='evening').length);
+    });
+    cells.push(dr.length);
+    return cells.join(',');
+  });
+
+  const csv=[headerLine,...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=`report_${mk}.csv`;a.click();
+  toast(T[lang].csvExported);
+}
+
+// ══════════════════════════════════════
+// PUBLISH
+// ══════════════════════════════════════
+function renderPublishTab(){
+  const months=[];for(let i=-1;i<=3;i++){const d=new Date(now.getFullYear(),now.getMonth()+i,1);months.push({y:d.getFullYear(),m:d.getMonth()+1,label:`${T[lang].months[d.getMonth()]} ${d.getFullYear()}`});}
+  const L=T[lang];
+  document.getElementById('publish-months-list').innerHTML=months.map(({y,m,label})=>{
+    const mk=monthKey(y,m);const isPub=!!publishedMonths[mk];
+    const app=reqs.filter(r=>r.date.startsWith(mk)&&r.status==='approved').length;
+    const pen=reqs.filter(r=>r.date.startsWith(mk)&&r.status==='pending').length;
+    return`<div class="publish-banner ${isPub?'published':'unpublished'}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="publish-dot ${isPub?'':'off'}"></span>
+        <div><div style="font-size:14px;font-weight:600">${label}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${app} ${L.approvedCount} · ${pen} ${L.pendingCount} ${isPub?`<span style="color:var(--success);font-weight:500;margin-inline-start:8px">${L.publishStatus.published}</span>`:`<span style="color:var(--text3);margin-inline-start:8px">${L.publishStatus.notPublished}</span>`}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${!isPub?`<button class="btn btn-publish" onclick="publishMonth('${mk}')">📢 ${isPub?'':lang==='he'?'פרסם':'Publish'}</button>`
+          :`<button class="btn btn-success btn-sm" onclick="publishMonth('${mk}')">↺ ${lang==='he'?'עדכן':'Re-publish'}</button>
+            <button class="btn btn-danger btn-sm" onclick="unpublishMonth('${mk}')">${lang==='he'?'בטל פרסום':'Unpublish'}</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+function publishMonth(mk){publishedMonths[mk]=true;savePublished();renderPublishTab();toast(T[lang].published);}
+function unpublishMonth(mk){if(!confirm(lang==='he'?'לבטל פרסום?':'Unpublish?'))return;publishedMonths[mk]=false;savePublished();renderPublishTab();toast(T[lang].unpublished);}
+
+// ══════════════════════════════════════
+// ADMIN — REQUESTS
+// ══════════════════════════════════════
+function renderAdmin(){renderStats();populateMonthFilters();renderRequests();}
+function renderStats(){
+  const L=T[lang];
+  const pending=reqs.filter(r=>r.status==='pending').length;
+  const approved=reqs.filter(r=>r.status==='approved').length;
+  const needAttn=getConflicts().length+swaps.filter(s=>(s.status==='claimed'||s.target_approval==='accepted')&&s.admin_status==='pending').length;
+  document.getElementById('admin-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${reqs.length}</div><div class="stat-label">${L.totalRequests}</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--warn)">${pending}</div><div class="stat-label">${L.statuses.pending}</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--success)">${approved}</div><div class="stat-label">${L.statuses.approved}</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--danger)">${needAttn}</div><div class="stat-label">${L.needAttention}</div></div>`;
+}
+function renderRequests(){
+  const fs=document.getElementById('f-status')?.value||'';const fsp=document.getElementById('f-spec')?.value||'';const fsi=document.getElementById('f-site')?.value||'';const fdoc=document.getElementById('f-doctor')?.value||'';const fsh=document.getElementById('f-shift')?.value||'';const fmo=document.getElementById('f-month')?.value||'';
+  const L=T[lang];
+  const data=reqs.filter(r=>{
+    if(fs&&r.status!==fs)return false;if(fsp&&r.specialty!==fsp)return false;if(fsi&&r.site!==fsi)return false;if(fdoc&&r.doctor!==fdoc)return false;
+    if(fsh==='regular'&&r.shift_type!=null)return false;if(fsh==='morning'&&r.shift_type!=='morning')return false;if(fsh==='evening'&&r.shift_type!=='evening')return false;
+    if(fmo&&!r.date.startsWith(fmo))return false;
+    return true;
+  }).sort((a,b)=>a.date.localeCompare(b.date));
+  const wrap=document.getElementById('req-table');
+  if(!data.length){wrap.innerHTML=`<div class="empty-state"><div class="icon">🔍</div>${L.noRequests}</div>`;return;}
+  let h=`<table class="req-table"><thead><tr>
+    <th>${lang==='he'?'תאריך':'Date'}</th><th>${lang==='he'?'רופא':'Doctor'}</th><th>${lang==='he'?'התמחות':'Specialty'}</th>
+    <th>${lang==='he'?'אתר':'Site'}</th><th>${lang==='he'?'משמרת':'Shift'}</th><th>${lang==='he'?'סטטוס':'Status'}</th><th></th>
+  </tr></thead><tbody>`;
+  data.forEach(r=>{
+    h+=`<tr><td style="font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap">${r.date}</td>
+    <td>${r.doctor}</td><td>${specBadge(r.specialty)}</td><td>${siteBadge(r.site)}</td>
+    <td>${r.shift_type?shiftBadge(r.shift_type):`<span style="color:var(--text3);font-size:11px">${L.shifts.regular}</span>`}</td>
+    <td>${stBadge(r.status)}</td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap">
+      ${r.status!=='approved'?`<button class="btn btn-success btn-sm" onclick="setStatus(${r.id},'approved')">${L.approveLabel}</button>`:''}
+      ${r.status!=='rejected'?`<button class="btn btn-danger btn-sm" onclick="setStatus(${r.id},'rejected')">${L.rejectLabel}</button>`:''}
+      ${r.status!=='pending'?`<button class="btn btn-ghost btn-sm" onclick="setStatus(${r.id},'pending')">${L.resetLabel}</button>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="adminEdit(${r.id})">${L.editLabel}</button>
+    </td></tr>`;
+  });
+  wrap.innerHTML=h+'</tbody></table>';renderStats();
+}
+async function setStatus(id,status){try{sync(true);await dbUpd('requests',id,{status});const r=reqs.find(r=>r.id===id);if(r)r.status=status;renderRequests();toast(T[lang].statuses[status]||status);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+function adminEdit(id){
+  const r=reqs.find(r=>r.id===id);if(!r)return;
+  const siteList=SITES.join(' / ');
+  const newSite=prompt(`${lang==='he'?'אתר עבור':'Site for'} ${r.doctor} ${lang==='he'?'ב':'on'} ${r.date}\n${lang==='he'?'הקלד אחד מ-':'Type one of:'} ${siteList}:`,r.site);
+  if(newSite===null)return;if(!SITES.includes(newSite.toUpperCase())){toast((lang==='he'?'השתמש באחד מ-':'Use one of: ')+siteList);return;}
+  let newShift=r.shift_type;
+  if(isSpecial(r.date)){const st=prompt(lang==='he'?'משמרת? morning או evening':'Shift? morning or evening',r.shift_type||'morning');if(st&&['morning','evening'].includes(st))newShift=st;}
+  const newStatus=prompt(lang==='he'?'סטטוס? pending / approved / rejected':'Status? pending / approved / rejected',r.status);
+  if(newStatus&&!['pending','approved','rejected'].includes(newStatus)){toast(lang==='he'?'סטטוס לא תקין':'Invalid status');return;}
+  const patch={site:newSite.toUpperCase(),shift_type:newShift||null};if(newStatus)patch.status=newStatus;
+  dbUpd('requests',id,patch).then(()=>{r.site=patch.site;r.shift_type=patch.shift_type;if(newStatus)r.status=newStatus;renderRequests();renderSchedule();toast('✓');}).catch(e=>toast(T[lang].errorPrefix+e.message));
+}
+async function bulkApprove(){const p=reqs.filter(r=>r.status==='pending');sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'approved'})));p.forEach(r=>r.status='approved');renderRequests();toast(`✓ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+async function bulkReject(){const p=reqs.filter(r=>r.status==='pending');sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'rejected'})));p.forEach(r=>r.status='rejected');renderRequests();toast(`✗ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+
+// ══════════════════════════════════════
+// SCHEDULE + MOVE
+// ══════════════════════════════════════
+function populateSchedMonths(){
+  const sel=document.getElementById('sched-month');if(!sel||sel.options.length)return;
+  const L=T[lang];
+  for(let i=0;i<4;i++){const d=new Date(now.getFullYear(),now.getMonth()+i,1);const val=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;const o=document.createElement('option');o.value=val;o.textContent=`${L.months[d.getMonth()]} ${d.getFullYear()}`;sel.appendChild(o);}
+}
+function renderSchedule(){
+  const sel=document.getElementById('sched-month');if(!sel||!sel.value)return;
+  const L=T[lang];const[y,m]=sel.value.split('-').map(Number);const dim=new Date(y,m,0).getDate();
+  const specs=['ortho','pedia','internal'];const ss={ortho:lang==='he'?'אורתו':'Ortho',pedia:lang==='he'?'ילדים':'Pedia',internal:lang==='he'?'פנימית':'Int'};const sites=SITES;
+  let h=`<table class="sched-table"><thead><tr><th>${lang==='he'?'תאריך':'Date'}</th>`;
+  sites.forEach(site=>specs.forEach(sp=>{h+=`<th><span class="tag-${site.toLowerCase()}">${site[0]}</span> ${ss[sp]}</th>`;}));
+  h+='</tr></thead><tbody>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${pad(m)}-${pad(d)}`;const dow=new Date(ds+'T12:00:00').getDay();
+    const special=isSpecial(ds);const hn=holName(ds);const rc=hn?'adm-holiday':((dow===5||dow===6)?'adm-weekend':'');
+    if(special){
+      ['morning','evening'].forEach((st,si)=>{
+        h+=`<tr class="${rc}">`;
+        if(si===0)h+=`<td rowspan="2" style="font-size:10px;font-family:'DM Mono',monospace;vertical-align:middle;white-space:nowrap">${ds}<br><span style="color:var(--text3)">${L.days[dow]}</span>${hn?`<br><span style="color:var(--warn);font-size:9px">${hn}</span>`:''}</td>`;
+        sites.forEach(site=>{specs.forEach(sp=>{
+          const n=getNeeded(ds,site,sp,st);
+          const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type===st);
+          let cell=`<div style="font-size:9px;color:var(--text3)">${st==='morning'?'🌅':'🌙'}(${n})</div>`;
+          if(!appr.length)cell+=`<span class="slot-empty">—</span>`;
+          else{appr.slice(0,n).forEach(r=>{const sn=r.doctor.replace('Dr. ','').split(' ')[0];cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
+          h+=`<td>${cell}</td>`;
+        });});h+='</tr>';
+      });
+    }else{
+      h+=`<tr class="${rc}"><td style="font-size:10px;font-family:'DM Mono',monospace;white-space:nowrap">${ds}<br><span style="color:var(--text3)">${L.days[dow]}</span></td>`;
+      sites.forEach(site=>{specs.forEach(sp=>{
+        const n=getNeeded(ds,site,sp,null);
+        const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&!r.shift_type);
+        let cell='';
+        if(!appr.length)cell=`<span class="slot-empty">—</span>`;
+        else{appr.slice(0,n).forEach(r=>{const sn=r.doctor.replace('Dr. ','').split(' ')[0];cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
+        h+=`<td>${cell}</td>`;
+      });});h+='</tr>';
+    }
+  }
+  document.getElementById('sched-grid').innerHTML=h+'</tbody></table>';
+}
+function openMoveModal(id){
+  moveId=id;const r=reqs.find(r=>r.id===id);if(!r)return;
+  document.getElementById('move-title').textContent=`${T[lang].moveLabel} ${r.doctor}`;
+  document.getElementById('move-desc').textContent=`${lang==='he'?'כרגע:':'Currently:'} ${r.site} ${lang==='he'?'ב':'on'} ${r.date}${r.shift_type?' ('+r.shift_type+')':''}`;
+  document.getElementById('move-site').value=SITES[(SITES.indexOf(r.site)+1)%SITES.length];
+  const sp=isSpecial(r.date);document.getElementById('move-shift-row').style.display=sp?'':'none';
+  if(sp&&r.shift_type)document.getElementById('move-shift').value=r.shift_type;
+  openModal('modal-move');
+}
+async function applyMove(){
+  const r=reqs.find(r=>r.id===moveId);if(!r)return;
+  const newSite=document.getElementById('move-site').value;const newShift=isSpecial(r.date)?document.getElementById('move-shift').value:null;
+  try{await dbUpd('requests',r.id,{site:newSite,shift_type:newShift});r.site=newSite;r.shift_type=newShift;closeModal('modal-move');renderSchedule();renderRequests();toast(T[lang].moved+newSite);}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+
+// ══════════════════════════════════════
+// CONFLICTS
+// ══════════════════════════════════════
+function getConflicts(){
+  const out=[];
+  [...new Set(reqs.map(r=>r.date))].sort().forEach(date=>{
+    const sp2=isSpecial(date)?['morning','evening']:[null];
+    SITES.forEach(site=>{['ortho','pedia','internal'].forEach(sp=>{sp2.forEach(st=>{
+      const n=getNeeded(date,site,sp,st);
+      const ap=reqs.filter(r=>r.date===date&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type==st);
+      const pe=reqs.filter(r=>r.date===date&&r.site===site&&r.specialty===sp&&r.status==='pending'&&r.shift_type==st);
+      if(ap.length+pe.length>n&&pe.length>0)out.push({date,site,specialty:sp,shift_type:st,approved:ap,pending:pe,needed:n});
+    });});});
+  });return out;
+}
+function renderConflicts(){
+  cflList=getConflicts();const wrap=document.getElementById('conflicts-list');
+  if(!cflList.length){wrap.innerHTML=`<div class="empty-state"><div class="icon">✅</div>${T[lang].noConflicts}</div>`;return;}
+  wrap.innerHTML=cflList.map((c,i)=>`<div class="conflict-item">
+    <div><div style="font-size:13px;font-weight:600">${c.date} · ${c.site} · ${specLbl(c.specialty)}${c.shift_type?' · '+c.shift_type:''}</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.approved.length} ${T[lang].statuses.approved} · ${c.pending.length} ${T[lang].statuses.pending} · ${lang==='he'?'קיבולת:':'capacity:'} ${c.needed}</div></div>
+    <button class="btn btn-warn btn-sm" onclick="openCflModal(${i})">${lang==='he'?'פתור →':'Resolve →'}</button>
+  </div>`).join('');renderStats();
+}
+function openCflModal(i){
+  cflIdx=i;const c=cflList[i];
+  document.getElementById('cm-title').textContent=`${c.date} · ${c.site} · ${specLbl(c.specialty)}${c.shift_type?' · '+c.shift_type:''}`;
+  document.getElementById('cm-sub').textContent=lang==='he'?`בחר עד ${c.needed} רופאים לאישור.`:`Select up to ${c.needed} to approve.`;
+  const all=[...c.approved,...c.pending];
+  document.getElementById('cm-body').innerHTML=all.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><input type="checkbox" id="cr-${r.id}" ${r.status==='approved'?'checked':''} style="width:16px;height:16px;cursor:pointer"><label for="cr-${r.id}" style="flex:1;font-size:13px;cursor:pointer">${r.doctor}</label>${stBadge(r.status)}</div>`).join('');
+  openModal('modal-conflict');
+}
+async function applyConflict(){
+  const c=cflList[cflIdx];const all=[...c.approved,...c.pending];
+  if(all.filter(r=>document.getElementById('cr-'+r.id)?.checked).length>c.needed){toast(lang==='he'?`בחר לכל היותר ${c.needed}`:`Select at most ${c.needed}`);return;}
+  sync(true);try{await Promise.all(all.map(r=>{const s=document.getElementById('cr-'+r.id)?.checked?'approved':'rejected';r.status=s;return dbUpd('requests',r.id,{status:s});}));closeModal('modal-conflict');renderConflicts();renderRequests();toast(T[lang].resolved);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
+}
+
+// ══════════════════════════════════════
+// ADMIN EXCHANGE
+// ══════════════════════════════════════
+function renderAdminExchange(){renderAdminGiveaways();renderAdminSwaps();}
+function renderAdminGiveaways(){
+  const wrap=document.getElementById('admin-giveaways-list');
+  const claimed=swaps.filter(s=>s.type==='giveaway'&&s.status==='claimed'&&s.admin_status==='pending');
+  const L=T[lang];
+  if(!claimed.length){wrap.innerHTML=`<div class="empty-state" style="padding:16px"><div class="icon">🎁</div>${lang==='he'?'אין תביעות ממתינות לאישור':'No giveaway claims awaiting approval'}</div>`;return;}
+  let h=`<table class="req-table"><thead><tr><th>${lang==='he'?'נותן':'Giver'}</th><th>${lang==='he'?'תובע':'Claimer'}</th><th>${lang==='he'?'פרטים':'Details'}</th><th></th></tr></thead><tbody>`;
+  claimed.forEach(s=>{
+    const r=reqs.find(r=>r.id===s.requester_req_id);
+    h+=`<tr><td>${s.requester}</td><td><strong>${s.target_doctor}</strong></td><td style="font-size:12px">${r?shiftDesc(r):'—'}</td>
+    <td style="display:flex;gap:4px"><button class="btn btn-success btn-sm" onclick="approveGiveaway(${s.id})">${L.approveLabel}</button><button class="btn btn-danger btn-sm" onclick="rejectGiveaway(${s.id})">${L.rejectLabel}</button></td></tr>`;
+  });
+  wrap.innerHTML=h+'</tbody></table>';
+}
+async function approveGiveaway(swapId){
+  const s=swaps.find(s=>s.id===swapId);if(!s)return;
+  const origReq=reqs.find(r=>r.id===s.requester_req_id);if(!origReq)return;
+  const claimer=s.target_doctor;const claimerSpec=getDocSpec(claimer)||s.specialty;
+  sync(true);try{
+    await dbUpd('requests',origReq.id,{doctor:claimer,specialty:claimerSpec,status:'approved'});
+    origReq.doctor=claimer;origReq.specialty=claimerSpec;origReq.status='approved';
+    await dbUpd('swaps',swapId,{admin_status:'approved',status:'swap_approved'});
+    s.admin_status='approved';s.status='swap_approved';
+    renderAdminExchange();renderRequests();renderMyReqs();renderCal();
+    toast(T[lang].giveawayApproved+claimer);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
+}
+async function rejectGiveaway(swapId){
+  const s=swaps.find(s=>s.id===swapId);if(!s)return;
+  try{
+    await dbUpd('swaps',swapId,{status:'giveaway',target_doctor:null,admin_status:'pending'});
+    s.status='giveaway';s.target_doctor=null;s.admin_status='pending';
+    renderAdminExchange();renderMyReqs();renderExchangeTab();toast(T[lang].giveawayRejected);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+function renderAdminSwaps(){
+  const wrap=document.getElementById('admin-swaps-list');
+  const ready=swaps.filter(s=>s.type==='swap'&&s.target_approval==='accepted'&&s.admin_status==='pending');
+  const L=T[lang];
+  if(!ready.length){wrap.innerHTML=`<div class="empty-state" style="padding:16px"><div class="icon">⇄</div>${lang==='he'?'אין בקשות החלפה ממתינות לאישורך':'No swap requests awaiting your approval'}</div>`;return;}
+  let h=`<table class="req-table"><thead><tr><th>${lang==='he'?'רופא א':'Doctor A'}</th><th>${lang==='he'?'רופא ב':'Doctor B'}</th><th>${lang==='he'?'פרטים':'Details'}</th><th></th></tr></thead><tbody>`;
+  ready.forEach(s=>{
+    const rA=reqs.find(r=>r.id===s.requester_req_id);const rB=s.target_req_id?reqs.find(r=>r.id===s.target_req_id):null;
+    h+=`<tr>
+      <td>${s.requester}<br><span style="font-size:11px;color:var(--text2)">${rA?shiftDesc(rA):'—'}</span></td>
+      <td>${s.target_doctor}<br><span style="font-size:11px;color:var(--text2)">${rB?shiftDesc(rB):lang==='he'?'כל משמרת':'any shift'}</span></td>
+      <td style="font-size:12px">${s.note||'—'}</td>
+      <td style="display:flex;gap:4px"><button class="btn btn-success btn-sm" onclick="approveSwap(${s.id})">${L.approveLabel}</button><button class="btn btn-danger btn-sm" onclick="rejectSwap(${s.id})">${L.rejectLabel}</button></td>
+    </tr>`;
+  });
+  wrap.innerHTML=h+'</tbody></table>';
+}
+async function approveSwap(swapId){
+  const s=swaps.find(s=>s.id===swapId);if(!s)return;
+  const rA=reqs.find(r=>r.id===s.requester_req_id);const rB=s.target_req_id?reqs.find(r=>r.id===s.target_req_id):null;
+  sync(true);try{
+    if(rA&&rB){const[tS,tSh,tD]=[rA.site,rA.shift_type,rA.date];await dbUpd('requests',rA.id,{site:rB.site,shift_type:rB.shift_type,date:rB.date});await dbUpd('requests',rB.id,{site:tS,shift_type:tSh,date:tD});rA.site=rB.site;rA.shift_type=rB.shift_type;rA.date=rB.date;rB.site=tS;rB.shift_type=tSh;rB.date=tD;}
+    await dbUpd('swaps',swapId,{admin_status:'approved',status:'swap_approved'});s.admin_status='approved';s.status='swap_approved';
+    renderAdminExchange();renderRequests();toast(T[lang].swapApproved);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
+}
+async function rejectSwap(swapId){
+  const s=swaps.find(s=>s.id===swapId);if(!s)return;
+  try{await dbUpd('swaps',swapId,{admin_status:'rejected',status:'swap_rejected'});s.admin_status='rejected';s.status='swap_rejected';renderAdminExchange();toast(T[lang].swapRejected);}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+
+// ══════════════════════════════════════
+// AUTO-SCHEDULE
+// ══════════════════════════════════════
+async function autoSchedule(){
+  showLoad(true,T[lang].autoSched);
+  try{
+    const counts={};reqs.filter(r=>r.status==='approved').forEach(r=>counts[r.doctor]=(counts[r.doctor]||0)+1);
+    const groups={};reqs.filter(r=>r.status==='pending').forEach(r=>{const k=`${r.date}||${r.site}||${r.specialty}||${r.shift_type||''}`;if(!groups[k])groups[k]=[];groups[k].push(r);});
+    const sorted=Object.entries(groups).sort(([ka],[kb])=>{
+      const[da,sa,spa,sha]=ka.split('||');const[db,sb,spb,shb]=kb.split('||');
+      return reqs.filter(r=>r.date===da&&r.site===sa&&r.specialty===spa&&r.status==='approved'&&r.shift_type==(sha||null)).length-reqs.filter(r=>r.date===db&&r.site===sb&&r.specialty===spb&&r.status==='approved'&&r.shift_type==(shb||null)).length;
+    });
+    const updates=[];let app=0,rej=0;
+    for(const[key,pr] of sorted){
+      const[date,site,sp,str]=key.split('||');const st=str||null;
+      const n=getNeeded(date,site,sp,st);
+      const already=reqs.filter(r=>r.date===date&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type==(st||null)).length;
+      const slots=n-already;
+      const candidates=[...pr].sort((a,b)=>(counts[a.doctor]||0)-(counts[b.doctor]||0)||(a.id-b.id));
+      candidates.forEach((r,i)=>{if(i<slots&&slots>0){r.status='approved';counts[r.doctor]=(counts[r.doctor]||0)+1;app++;updates.push({id:r.id,s:'approved'});}else{r.status='rejected';rej++;updates.push({id:r.id,s:'rejected'});}});
+    }
+    const bs=10;for(let i=0;i<updates.length;i+=bs)await Promise.all(updates.slice(i,i+bs).map(u=>dbUpd('requests',u.id,{status:u.s})));
+    renderRequests();renderStats();toast(T[lang].autoResult+app+T[lang].autoRejected+rej);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}finally{showLoad(false);}
+}
+
+// ══════════════════════════════════════
+// SLOT RULES
+// ══════════════════════════════════════
+function renderRules(){
+  const L=T[lang];
+  const tbody=document.getElementById('rules-tbody');
+  if(!slotRules.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-style:italic">${L.noRules}</td></tr>`;return;}
+  tbody.innerHTML=slotRules.map(r=>`<tr>
+    <td><strong>${L.days[r.day_of_week]}</strong></td><td>${specBadge(r.specialty)}</td><td>${siteBadge(r.site)}</td>
+    <td>${r.shift_type?shiftBadge(r.shift_type):`<span style="color:var(--text3);font-size:11px">${L.shifts.regular}</span>`}</td>
+    <td><span class="need-badge ${r.doctors_needed<=2?'need-2':r.doctors_needed===3?'need-3':'need-4'}">${r.doctors_needed}</span></td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteRule(${r.id})">${L.removeLabel}</button></td>
+  </tr>`).join('');
+}
+async function addRule(){
+  const day=parseInt(document.getElementById('r-day').value),specialty=document.getElementById('r-spec').value,site=document.getElementById('r-site').value;
+  const shiftRaw=document.getElementById('r-shift').value,shift_type=shiftRaw||null;
+  const doctors_needed=parseInt(document.getElementById('r-needed').value);
+  if(!doctors_needed||doctors_needed<1){toast(lang==='he'?'הזן מספר תקין':'Enter valid number');return;}
+  if(slotRules.find(r=>r.day_of_week===day&&r.specialty===specialty&&r.site===site&&r.shift_type==shift_type)){toast(lang==='he'?'כלל כבר קיים':'Rule already exists');return;}
+  try{const ins=await dbIns('slot_rules',{day_of_week:day,specialty,site,shift_type,doctors_needed});slotRules.push(ins[0]);renderRules();toast(T[lang].ruleAdded);}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function deleteRule(id){try{await dbDel('slot_rules',id);slotRules=slotRules.filter(r=>r.id!==id);renderRules();toast(T[lang].ruleRemoved);}catch(e){toast(T[lang].errorPrefix+e.message);}}
+
+// ══════════════════════════════════════
+// HOLIDAYS
+// ══════════════════════════════════════
+async function addHoliday(){
+  const date=document.getElementById('hol-date').value,name=document.getElementById('hol-name').value.trim();
+  if(!date||!name){toast(lang==='he'?'הזן תאריך ושם':'Enter date and name');return;}
+  if(holidays.find(h=>h.date===date)){toast(lang==='he'?'כבר קיים':'Already added');return;}
+  try{const ins=await dbIns('holidays',{date,name});holidays.push(ins[0]);}catch(e){holidays.push({id:Date.now(),date,name});}
+  document.getElementById('hol-date').value='';document.getElementById('hol-name').value='';
+  renderHolidays();renderCal();toast(T[lang].holidayAdded);
+}
+async function removeHoliday(id){try{await dbDel('holidays',id);}catch(e){}holidays=holidays.filter(h=>h.id!==id);renderHolidays();renderCal();toast(T[lang].removed);}
+function renderHolidays(){
+  const wrap=document.getElementById('holidays-list');
+  if(!holidays.length){wrap.innerHTML=`<div class="empty-state" style="padding:20px"><div class="icon">📅</div>${T[lang].noHolidays}</div>`;return;}
+  let h=`<table class="req-table"><thead><tr><th>${lang==='he'?'תאריך':'Date'}</th><th>${lang==='he'?'שם':'Name'}</th><th></th></tr></thead><tbody>`;
+  holidays.sort((a,b)=>a.date.localeCompare(b.date)).forEach(hol=>{h+=`<tr><td style="font-family:'DM Mono',monospace;font-size:12px">${hol.date}</td><td>${hol.name}</td><td><button class="btn btn-danger btn-sm" onclick="removeHoliday(${hol.id})">${T[lang].removeLabel}</button></td></tr>`;});
+  wrap.innerHTML=h+'</tbody></table>';
+}
+
+// ══════════════════════════════════════
+// DOCTORS
+// ══════════════════════════════════════
+function renderDoctors(){
+  document.getElementById('doctor-cols').innerHTML=['ortho','pedia','internal'].map(sp=>`
+    <div class="spec-col">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">${specBadge(sp)}<span style="color:var(--text3);font-size:11px">(${(DOCS[sp]||[]).length})</span></div>
+      <div>${(DOCS[sp]||[]).map((d,i)=>`<div class="doctor-item"><span class="doc-name">${d.name}</span>
+        <span class="pin-badge" onclick="adminResetPin(${d.id},'${d.name}')">${T[lang].pinLabel}: ${d.pin||DEFAULT_PIN}</span>
+        <button class="btn btn-danger btn-sm" onclick="removeDoc(${d.id},'${sp}')">${T[lang].removeLabel}</button></div>`).join('')}</div>
+      <div class="add-row">
+        <input type="text" id="nd-${sp}" placeholder="Dr. Name" style="min-width:90px">
+        <input type="text" id="np-${sp}" placeholder="${T[lang].pinLabel}" maxlength="4" style="width:52px;text-align:center">
+        <button class="btn btn-primary btn-sm" onclick="addDoc('${sp}')">+</button>
+      </div>
+    </div>`).join('');
+}
+async function adminResetPin(id,name){
+  const newPin=prompt(`${T[lang].pinReset}${name}\n${lang==='he'?'הזן קוד 4 ספרות (ריק = 1234)':'Enter 4-digit PIN (blank = 1234)'}:`,'');
+  if(newPin===null)return;const pin=newPin.trim()||DEFAULT_PIN;
+  if(!/^\d{4}$/.test(pin)){toast(T[lang].pin4digits);return;}
+  try{await dbUpd('doctors',id,{pin});const d=getAllDocs().find(d=>d.id===id);if(d)d.pin=pin;renderDoctors();toast(T[lang].pinReset+name);}catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function addDoc(sp){
+  const nameInp=document.getElementById('nd-'+sp),pinInp=document.getElementById('np-'+sp);
+  const name=nameInp.value.trim(),pin=pinInp.value.trim()||DEFAULT_PIN;
+  if(!name)return;if(!name.startsWith('Dr.')){toast(lang==='he'?'שם חייב להתחיל ב-Dr.':'Name must start with Dr.');return;}
+  if(!/^\d{4}$/.test(pin)){toast(T[lang].pin4digits);return;}
+  try{const ins=await dbIns('doctors',{name,specialty:sp,pin});if(!DOCS[sp])DOCS[sp]=[];DOCS[sp].push(ins[0]);nameInp.value='';pinInp.value='';renderDoctors();populateDoctorFilter();toast(T[lang].doctorAdded);}catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function removeDoc(id,sp){
+  if(!confirm(lang==='he'?'להסיר רופא זה?':'Remove this doctor?'))return;
+  try{await dbDel('doctors',id);DOCS[sp]=(DOCS[sp]||[]).filter(d=>d.id!==id);renderDoctors();populateDoctorFilter();toast(T[lang].doctorRemoved);}catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+
+// ══════════════════════════════════════
+// LINKS
+// ══════════════════════════════════════
+function renderLinks(){
+  const L=T[lang];const m=L.months[now.getMonth()],y=now.getFullYear();
+  const dl=new Date(now.getFullYear(),now.getMonth(),10).toLocaleDateString(lang==='he'?'he-IL':'en-GB');
+  const link=document.getElementById('app-link').value;
+  document.getElementById('wa-msg').textContent=lang==='he'
+    ?`צוות יקר,\n\nנא להגיש בקשות משמרת עבור ${m} ${y}:\n\n🔗 ${link}\n\nהוראות:\n1. פתח את הקישור\n2. בחר התמחות ושם\n3. הזן קוד (ברירת מחדל: 1234)\n4. לחץ על ימים שברצונך לעבוד\n5. בחר מרפאה: זבולון / לין / טמרה / כפר יאסיף\n6. בשישי/שבת/חג — בחר 🌅 בוקר או 🌙 ערב\n\n⏰ מועד אחרון: ${dl}\n\nתודה,\nמנהל רפואי`
+    :`Dear Team,\n\nPlease submit your preferred shifts for ${m} ${y}:\n\n🔗 ${link}\n\nInstructions:\n1. Open the link\n2. Select your specialty and name\n3. Enter your PIN (default: 1234)\n4. Click days you wish to work\n5. Choose a clinic: ZVULUN / LIN / TAMRA / KFAR YASSIF\n6. On Fri/Sat/holidays — choose 🌅 Morning or 🌙 Evening\n\n⏰ Deadline: ${dl}\n\nThank you,\nMedical Director`;
+}
+function copyLink(){navigator.clipboard.writeText(document.getElementById('app-link').value).then(()=>toast(T[lang].copied)).catch(()=>toast(lang==='he'?'העתק ידנית':'Copy manually'));}
+function copyWA(){navigator.clipboard.writeText(document.getElementById('wa-msg').textContent).then(()=>toast(T[lang].copied)).catch(()=>toast(lang==='he'?'בחר והעתק':'Select and copy'));}
+function openWA(){window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('wa-msg').textContent),'_blank');}
+function exportCSV(){
+  const L=T[lang];
+  const h=`ID,${L.report.doctor},${L.report.spec},Date,Site,Shift,Status`;
+  const rows=reqs.map(r=>`${r.id},"${r.doctor}","${specLbl(r.specialty)}","${r.date}","${r.site}","${r.shift_type||L.shifts.regular}","${L.statuses[r.status]||r.status}"`);
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent([h,...rows].join('\n'));a.download='schedule.csv';a.click();toast(T[lang].csvExported);
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+(async()=>{
+  applyLang();
+  populateFilterSelects();
+  populateDaySelect();
+  populateRShiftSelect();
+  populateRSpecSelect();
+  showLoad(true);
+  renderCal();
+  await loadAll();
+  showLoad(false);
+})();
+</script>
+</body>
+</html>
