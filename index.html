@@ -929,9 +929,14 @@ const SITES=['ZVULUN','LIN','TAMRA','KFARYASSIF'];
 let DOCS={ortho:[],pedia:[],internal:[]};
 let reqs=[],swaps=[],holidays=[],slotRules=[];
 let publishedMonths={};
-function loadPublished(){try{const s=localStorage.getItem('clinicsched_published');if(s)return JSON.parse(s);}catch(e){}return {};}
-function savePublished(){localStorage.setItem('clinicsched_published',JSON.stringify(publishedMonths));}
-publishedMonths=loadPublished();
+async function loadPublished(){
+  try{
+    const rows=await dbGet('published_months');
+    const map={};
+    rows.forEach(r=>{map[r.month_key]=r.id;});
+    return map;
+  }catch(e){return {};}
+}
 
 const now=new Date();
 let calY=now.getFullYear(),calM=now.getMonth()+1;
@@ -992,7 +997,8 @@ async function loadAll(){
     try{swaps=await dbGet('swaps');}catch(e){swaps=[];}
     try{holidays=await dbGet('holidays');}catch(e){holidays=[];}
     try{slotRules=await dbGet('slot_rules');}catch(e){slotRules=[];}
-    renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();
+    try{publishedMonths=await loadPublished();}catch(e){publishedMonths={};}
+    renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();renderFinalScheduleDoctor();
     if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
   }catch(e){toast(T[lang].errorPrefix+e.message);}
   finally{sync(false);}
@@ -1604,8 +1610,23 @@ function renderPublishTab(){
     </div>`;
   }).join('');
 }
-function publishMonth(mk){publishedMonths[mk]=true;savePublished();renderPublishTab();toast(T[lang].published);}
-function unpublishMonth(mk){if(!confirm(lang==='he'?'לבטל פרסום?':'Unpublish?'))return;publishedMonths[mk]=false;savePublished();renderPublishTab();toast(T[lang].unpublished);}
+async function publishMonth(mk){
+  if(publishedMonths[mk]){renderPublishTab();toast(T[lang].published);return;}
+  try{
+    const ins=await dbIns('published_months',{month_key:mk});
+    publishedMonths[mk]=ins[0].id;
+    renderPublishTab();toast(T[lang].published);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function unpublishMonth(mk){
+  if(!confirm(lang==='he'?'לבטל פרסום?':'Unpublish?'))return;
+  try{
+    const id=publishedMonths[mk];
+    if(id)await dbDel('published_months',id);
+    delete publishedMonths[mk];
+    renderPublishTab();toast(T[lang].unpublished);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}
+}
 
 // ══════════════════════════════════════
 // ADMIN — REQUESTS
