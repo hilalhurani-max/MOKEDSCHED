@@ -509,6 +509,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
             <select id="sched-filter-site" onchange="renderSchedule()"><option value="">—</option><option value="ZVULUN">ZVULUN</option><option value="LIN">LIN</option><option value="TAMRA">TAMRA</option><option value="KFARYASSIF">KFAR YASSIF</option></select>
             <select id="sched-filter-spec" onchange="renderSchedule()"></select>
             <button class="btn btn-primary btn-sm" onclick="exportScheduleXlsx()">↓ Excel</button>
+            <button class="btn btn-danger btn-sm" onclick="openSosModal()">🆘 <span class="t" data-he="תגבור" data-en="Extra doctor">תגבור</span></button>
             <span style="font-size:11px;color:var(--text2)" class="t" data-he="💡 לחץ על שם להעביר בין אתרים" data-en="💡 Click a name to move between sites">💡 לחץ על שם להעביר בין אתרים</span>
           </div>
           <div class="sched-scroll" id="sched-grid"></div>
@@ -744,6 +745,24 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
   </div>
 </div>
 
+<!-- SOS EXTRA DOCTOR MODAL -->
+<div class="overlay" id="modal-sos">
+  <div class="modal" style="width:400px">
+    <h3>🆘 <span class="t" data-he="תגבור — רופא נוסף למשמרת" data-en="SOS — extra doctor for a shift">תגבור — רופא נוסף למשמרת</span></h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px" class="t" data-he="מוסיף מקום נוסף במשמרת אחת בתאריך מסוים בלבד (לא משנה את כללי המשמרת)." data-en="Adds one extra place to one shift on one date only (does not change the slot rules).">מוסיף מקום נוסף במשמרת אחת בתאריך מסוים בלבד (לא משנה את כללי המשמרת).</p>
+    <div class="modal-row"><label><span class="t" data-he="תאריך" data-en="Date">תאריך</span></label><input type="date" id="sos-date" onchange="sosRefresh()"></div>
+    <div class="modal-row"><label><span class="t" data-he="מרפאה" data-en="Clinic">מרפאה</span></label><select id="sos-site" onchange="sosRefresh()"></select></div>
+    <div class="modal-row"><label><span class="t" data-he="התמחות" data-en="Specialty">התמחות</span></label><select id="sos-spec" onchange="sosRefresh()"></select></div>
+    <div class="modal-row" id="sos-shift-row"><label><span class="t" data-he="משמרת" data-en="Shift">משמרת</span></label><select id="sos-shift" onchange="sosRefresh()"><option value="morning">🌅 Morning / בוקר</option><option value="evening">🌙 Evening / ערב</option></select></div>
+    <div class="modal-row"><label><span class="t" data-he="רופא" data-en="Doctor">רופא</span></label><select id="sos-doctor"></select></div>
+    <div id="sos-info" style="font-size:12px;color:var(--text2);margin:6px 0 4px"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sos')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
+      <button class="btn btn-danger" onclick="saveSos()">🆘 <span class="t" data-he="הוסף תגבור" data-en="Add extra">הוסף תגבור</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFLICT MODAL -->
 <div class="overlay" id="modal-conflict">
   <div class="modal" style="width:440px">
@@ -905,7 +924,7 @@ const T={
     noHolidays:'No holidays yet.',
     pinLabel:'PIN',
     removeLabel:'×',
-    approveLabel:'✓',rejectLabel:'✗',resetLabel:'↺',editLabel:'✏️',
+    approveLabel:'✓ Approve',rejectLabel:'✗ Reject',resetLabel:'↺',editLabel:'✏️',
     moveLabel:'Move',
     takeShift:'Take this shift',accept:'✓ Accept',decline:'✗ Decline',
     giveAway:'🎁 Give away',swap:'⇄ Swap',cancel:'Cancel',cancelGiveaway:'Cancel giveaway',
@@ -1116,7 +1135,12 @@ let volunteerSlot=null;
 // ══════════════════════════════════════
 // SLOT RULES
 // ══════════════════════════════════════
-function getNeeded(ds,site,sp,st){
+// Extra (SOS) slots added by the admin for one specific date. Stored in app_settings as key "extra|date|site|spec|shift", value = count.
+let extraSlots={};
+const extraKey=(ds,site,sp,st)=>`extra|${ds}|${site}|${sp}|${st||'regular'}`;
+function getExtra(ds,site,sp,st){const r=extraSlots[extraKey(ds,site,sp,st)];return r?(parseInt(r.value)||0):0;}
+function getNeeded(ds,site,sp,st){return getBaseNeeded(ds,site,sp,st)+getExtra(ds,site,sp,st);}
+function getBaseNeeded(ds,site,sp,st){
   const dow=new Date(ds+'T12:00:00').getDay();
   const specific=slotRules.filter(r=>r.day_of_week===dow&&r.specialty===sp&&r.site===site&&r.shift_type==(st||null));
   if(specific.length)return specific[0].doctors_needed;
@@ -1164,6 +1188,7 @@ async function loadAll(){
     try{holidays=await dbGet('holidays');}catch(e){holidays=[];}
     try{slotRules=await dbGet('slot_rules');}catch(e){slotRules=[];}
     try{publishedMonths=await loadPublished();}catch(e){publishedMonths={};}
+    try{const m=await loadSettingsMap();extraSlots={};Object.values(m).forEach(r=>{if(r.key.startsWith('extra|'))extraSlots[r.key]=r;});}catch(e){extraSlots={};}
     renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();renderFinalScheduleDoctor();renderMyReport();
     if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
     if(document.getElementById('panel-viewer').classList.contains('active'))showViewerTab(viewerTab);
@@ -1383,6 +1408,8 @@ async function submitRequest(){
   const site=document.getElementById('m-site').value;
   // "Both / all day" = two requests (morning + evening), so slots, approvals and reports keep working as before
   const wanted=!isSpecial(selDate)?[null]:(selShift==='both'?['morning','evening']:[selShift]);
+  const clash=wanted.map(st=>otherClinicReq(curDoc,selDate,st,site,['pending','approved'])).find(Boolean);
+  if(clash){const w=document.getElementById('m-warn');w.textContent=lang==='he'?`כבר ביקשת את ${siteName(clash.site)} במשמרת זו. אפשר לבחור מרפאה אחת לכל משמרת (בטל/י קודם את הבקשה הקודמת).`:`You already requested ${siteName(clash.site)} for this shift. Only one clinic per shift (cancel that request first).`;w.style.display='block';return;}
   const toAdd=wanted.filter(st=>!reqs.find(r=>r.doctor===curDoc&&r.date===selDate&&r.site===site&&r.shift_type==st));
   if(!toAdd.length){
     const w=document.getElementById('m-warn');w.textContent=T[lang].slotExists;w.style.display='block';return;
@@ -1670,6 +1697,8 @@ async function submitVolunteer(){
   if(!volunteerSlot)return;
   const{date,site,specialty,shift_type}=volunteerSlot;
   if(reqs.find(r=>r.doctor===curDoc&&r.date===date&&r.site===site&&r.shift_type==shift_type)){toast(T[lang].slotExists);closeModal('modal-volunteer');return;}
+  const clash=otherClinicReq(curDoc,date,shift_type,site,['pending','approved']);
+  if(clash){toast(lang==='he'?`כבר יש לך בקשה ל${siteName(clash.site)} במשמרת זו — מרפאה אחת לכל משמרת`:`You already have ${siteName(clash.site)} in this shift — one clinic per shift`,4500);closeModal('modal-volunteer');return;}
   try{
     const ins=await dbIns('requests',{doctor:curDoc,specialty:curSpec,date,site,status:'pending',shift_type});
     reqs.push(ins[0]);closeModal('modal-volunteer');renderMyReqs();renderFinalScheduleDoctor();toast(T[lang].requestSent);
@@ -1785,6 +1814,91 @@ function exportReportCSV(){
     buildShiftListSheet(y,m,r=>!specFilter||r.specialty===specFilter)
   ]);
 }
+
+// ══════════════════════════════════════
+// SCHEDULING RULES — one clinic per shift, and never above slot capacity
+// ══════════════════════════════════════
+const sameShift=(a,b)=>(a||null)===(b||null);
+// Another request of this doctor on the same date + shift at a DIFFERENT clinic (statuses = which ones count)
+function otherClinicReq(doctor,date,st,site,statuses,excludeIds=[]){
+  return reqs.find(o=>o.doctor===doctor&&o.date===date&&sameShift(o.shift_type,st)&&o.site!==site&&statuses.includes(o.status)&&!excludeIds.includes(o.id));
+}
+function approvedCount(date,site,sp,st,excludeIds=[]){
+  return reqs.filter(o=>o.date===date&&o.site===site&&o.specialty===sp&&sameShift(o.shift_type,st)&&o.status==='approved'&&!excludeIds.includes(o.id)).length;
+}
+// Returns null if r may be approved, otherwise a message explaining why not
+function approvalBlock(r,excludeIds=[]){
+  const he=lang==='he';const ex=[r.id,...excludeIds];
+  const other=otherClinicReq(r.doctor,r.date,r.shift_type,r.site,['approved'],ex);
+  if(other)return he?`${r.doctor} כבר משובץ/ת ב${siteName(other.site)} באותה משמרת`:`${r.doctor} is already assigned to ${siteName(other.site)} in the same shift`;
+  const n=getNeeded(r.date,r.site,r.specialty,r.shift_type);
+  if(approvedCount(r.date,r.site,r.specialty,r.shift_type,ex)>=n)return he?`המשמרת מלאה (${n}/${n}). בטל/י קודם רופא מאושר, או הוסף/י תגבור 🆘`:`This shift is full (${n}/${n}). Remove an approved doctor first, or add an SOS extra 🆘`;
+  return null;
+}
+// Doctors assigned (approved) to two clinics in the same shift — existing data problems
+function getDoubleBookings(){
+  const map={};reqs.filter(r=>r.status==='approved'&&inScope(r)).forEach(r=>{const k=`${r.doctor}|${r.date}|${r.shift_type||''}`;(map[k]=map[k]||[]).push(r);});
+  return Object.values(map).filter(l=>new Set(l.map(r=>r.site)).size>1).sort((a,b)=>a[0].date.localeCompare(b[0].date));
+}
+
+// ── SOS EXTRA DOCTOR ──
+function openSosModal(pref){
+  const he=lang==='he';pref=pref||{};
+  const sel=document.getElementById('sched-month');
+  const def=pref.date||(sel&&sel.value&&!isoToday().startsWith(sel.value)?sel.value+'-01':isoToday());
+  document.getElementById('sos-date').value=def;
+  document.getElementById('sos-site').innerHTML=SITES.map(x=>`<option value="${x}">${siteName(x)}</option>`).join('');
+  if(pref.site)document.getElementById('sos-site').value=pref.site;
+  const spSel=document.getElementById('sos-spec');
+  spSel.innerHTML=['ortho','pedia','internal'].map(x=>`<option value="${x}">${specLbl(x)}</option>`).join('');
+  spSel.value=scopeSpec()||pref.sp||'ortho';spSel.disabled=!!scopeSpec();
+  document.getElementById('sos-shift').value=pref.st||'morning';
+  sosRefresh();openModal('modal-sos');
+}
+function sosRefresh(){
+  const he=lang==='he';
+  const ds=document.getElementById('sos-date').value;const site=document.getElementById('sos-site').value;const sp=document.getElementById('sos-spec').value;
+  const special=ds&&isSpecial(ds);document.getElementById('sos-shift-row').style.display=special?'':'none';
+  const st=special?document.getElementById('sos-shift').value:null;
+  const docSel=document.getElementById('sos-doctor');const cur=docSel.value;
+  const inSlot=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&sameShift(r.shift_type,st)&&r.status==='approved').map(r=>r.doctor);
+  docSel.innerHTML=`<option value="">${he?'— השאר פנוי להתנדבות רופאים —':'— Leave open for doctors to volunteer —'}</option>`+
+    (DOCS[sp]||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(d=>{
+      const busy=ds&&otherClinicReq(d.name,ds,st,site,['approved']);const here=inSlot.includes(d.name);
+      return`<option value="${d.name}" ${busy||here?'disabled':''}>${d.name}${here?(he?' (כבר במשמרת)':' (already in this shift)'):busy?(he?` (ב${siteName(busy.site)})`:` (at ${siteName(busy.site)})`):''}</option>`;}).join('');
+  if(cur&&[...docSel.options].some(o=>o.value===cur&&!o.disabled))docSel.value=cur;
+  const base=ds?getBaseNeeded(ds,site,sp,st):0,extra=ds?getExtra(ds,site,sp,st):0;
+  document.getElementById('sos-info').innerHTML=ds?`${he?'כרגע':'Now'}: <strong>${inSlot.length}</strong> ${he?'מאושרים':'approved'} / ${base}${extra?` + ${extra} 🆘`:''} ${he?'מקומות':'slots'}${inSlot.length?` — ${inSlot.join(', ')}`:''}`:'';
+}
+async function saveSos(){
+  const he=lang==='he';
+  const ds=document.getElementById('sos-date').value;if(!ds){toast(he?'בחר תאריך':'Pick a date');return;}
+  const site=document.getElementById('sos-site').value;const sp=scopeSpec()||document.getElementById('sos-spec').value;
+  const st=isSpecial(ds)?document.getElementById('sos-shift').value:null;const doc=document.getElementById('sos-doctor').value;
+  if(doc&&otherClinicReq(doc,ds,st,site,['approved'])){toast(he?'הרופא כבר משובץ במרפאה אחרת באותה משמרת':'That doctor is already assigned to another clinic in this shift');return;}
+  sync(true);
+  try{
+    const k=extraKey(ds,site,sp,st);const row=extraSlots[k];const nv=String(getExtra(ds,site,sp,st)+1);
+    if(row){await dbUpd('app_settings',row.id,{value:nv});row.value=nv;}else{const ins=await dbIns('app_settings',{key:k,value:nv});extraSlots[k]=ins[0];}
+    if(doc){
+      const existing=reqs.find(r=>r.doctor===doc&&r.date===ds&&r.site===site&&sameShift(r.shift_type,st));
+      if(existing){await dbUpd('requests',existing.id,{status:'approved'});existing.status='approved';}
+      else{const ins=await dbIns('requests',{doctor:doc,specialty:sp,date:ds,site,status:'approved',shift_type:st});reqs.push(ins[0]);}
+    }
+    closeModal('modal-sos');renderSchedule();renderRequests();renderStats();
+    toast(doc?(he?`🆘 ${doc} נוסף/ה כתגבור`:`🆘 ${doc} added as extra`):(he?'🆘 נפתח מקום נוסף — רופאים יכולים להתנדב בלוח הסופי':'🆘 Extra slot opened — doctors can volunteer on the Final Schedule'));
+  }catch(e){toast(NO_TABLE_RE.test(e.message)?(he?'יש להריץ קודם את קוד ה-SQL ליצירת app_settings':'Run the app_settings setup SQL first'):T[lang].errorPrefix+e.message);}
+  finally{sync(false);}
+}
+async function removeExtraSlot(ds,site,sp,st){
+  const he=lang==='he';if(scopeSpec()&&sp!==scopeSpec())return;
+  const extra=getExtra(ds,site,sp,st);if(!extra)return;
+  if(approvedCount(ds,site,sp,st)>getNeeded(ds,site,sp,st)-1){toast(he?'כל המקומות תפוסים — דחה/י קודם את רופא התגבור ברשימת הבקשות':'All places are filled — reject the extra doctor in Requests first');return;}
+  if(!confirm(he?'להסיר מקום תגבור 🆘 אחד מהמשמרת?':'Remove one SOS extra slot from this shift?'))return;
+  try{const row=extraSlots[extraKey(ds,site,sp,st)];const nv=String(extra-1);await dbUpd('app_settings',row.id,{value:nv});row.value=nv;renderSchedule();toast('✓');}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+function extraTag(ds,site,sp,st){const x=getExtra(ds,site,sp,st);return x?`<span title="${lang==='he'?'לחץ להסרת מקום תגבור':'Click to remove an extra slot'}" style="cursor:pointer;font-size:9px;color:#c0392b;font-weight:700" onclick="event.stopPropagation();removeExtraSlot('${ds}','${site}','${sp}',${st?`'${st}'`:'null'})">🆘+${x}</span>`:'';}
 
 // ══════════════════════════════════════
 // ROLES — UI, LOGOUT, SECRETARY VIEW, TODAY BOARD
@@ -2096,7 +2210,7 @@ function renderStats(){
   const L=T[lang];const R=reqs.filter(inScope);
   const pending=R.filter(r=>r.status==='pending').length;
   const approved=R.filter(r=>r.status==='approved').length;
-  const needAttn=getConflicts().length+swaps.filter(s=>inScope(s)&&(s.status==='claimed'||s.target_approval==='accepted')&&s.admin_status==='pending').length;
+  const needAttn=getConflicts().length+getDoubleBookings().length+swaps.filter(s=>inScope(s)&&(s.status==='claimed'||s.target_approval==='accepted')&&s.admin_status==='pending').length;
   document.getElementById('admin-stats').innerHTML=`
     <div class="stat-card"><div class="stat-num">${R.length}</div><div class="stat-label">${L.totalRequests}</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--warn)">${pending}</div><div class="stat-label">${L.statuses.pending}</div></div>
@@ -2128,13 +2242,15 @@ function renderRequests(){
     <td style="display:flex;gap:4px;flex-wrap:wrap">
       ${r.status!=='approved'?`<button class="btn btn-success btn-sm" onclick="setStatus(${r.id},'approved')">${L.approveLabel}</button>`:''}
       ${r.status!=='rejected'?`<button class="btn btn-danger btn-sm" onclick="setStatus(${r.id},'rejected')">${L.rejectLabel}</button>`:''}
-      ${r.status!=='pending'?`<button class="btn btn-ghost btn-sm" onclick="setStatus(${r.id},'pending')">${L.resetLabel}</button>`:''}
-      <button class="btn btn-ghost btn-sm" onclick="adminEdit(${r.id})">${L.editLabel}</button>
+
     </td></tr>`;
   });
   wrap.innerHTML=h+'</tbody></table>';renderStats();
 }
-async function setStatus(id,status){try{sync(true);await dbUpd('requests',id,{status});const r=reqs.find(r=>r.id===id);if(r)r.status=status;renderRequests();toast(T[lang].statuses[status]||status);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+async function setStatus(id,status){
+  const rr=reqs.find(r=>r.id===id);
+  if(status==='approved'&&rr){const why=approvalBlock(rr);if(why){toast('⛔ '+why,4500);return;}}
+  try{sync(true);await dbUpd('requests',id,{status});const r=reqs.find(r=>r.id===id);if(r)r.status=status;renderRequests();toast(T[lang].statuses[status]||status);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
 function adminEdit(id){
   const r=reqs.find(r=>r.id===id);if(!r)return;
   const siteList=SITES.join(' / ');
@@ -2147,7 +2263,15 @@ function adminEdit(id){
   const patch={site:newSite.toUpperCase(),shift_type:newShift||null};if(newStatus)patch.status=newStatus;
   dbUpd('requests',id,patch).then(()=>{r.site=patch.site;r.shift_type=patch.shift_type;if(newStatus)r.status=newStatus;renderRequests();renderSchedule();toast('✓');}).catch(e=>toast(T[lang].errorPrefix+e.message));
 }
-async function bulkApprove(){const p=reqs.filter(r=>r.status==='pending'&&inScope(r));sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'approved'})));p.forEach(r=>r.status='approved');renderRequests();toast(`✓ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+async function bulkApprove(){
+  const p=reqs.filter(r=>r.status==='pending'&&inScope(r)).sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+  const ok=[];let skipped=0;
+  p.forEach(r=>{if(approvalBlock(r)){skipped++;return;}r.status='approved';ok.push(r);}); // mark as we go so capacity counts include earlier approvals
+  sync(true);
+  try{await Promise.all(ok.map(r=>dbUpd('requests',r.id,{status:'approved'})));renderRequests();
+    toast(lang==='he'?`✓ אושרו ${ok.length}${skipped?` · ${skipped} נשארו ממתינים (משמרת מלאה / רופא במרפאה אחרת)`:''}`:`✓ Approved ${ok.length}${skipped?` · ${skipped} left pending (shift full / doctor at another clinic)`:''}`,5000);}
+  catch(e){ok.forEach(r=>r.status='pending');toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
+}
 async function bulkReject(){const p=reqs.filter(r=>r.status==='pending'&&inScope(r));sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'rejected'})));p.forEach(r=>r.status='rejected');renderRequests();toast(`✗ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
 
 // ══════════════════════════════════════
@@ -2178,7 +2302,7 @@ function renderSchedule(){
         sites.forEach(site=>{specs.forEach(sp=>{
           const n=getNeeded(ds,site,sp,st);
           const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type===st);
-          let cell=`<div style="font-size:9px;color:var(--text3)">${st==='morning'?'🌅':'🌙'}(${n})</div>`;
+          let cell=`<div style="font-size:9px;color:var(--text3)">${st==='morning'?'🌅':'🌙'}(${n}) ${extraTag(ds,site,sp,st)}</div>`;
           if(!appr.length)cell+=`<span class="slot-empty">—</span>`;
           else{appr.slice(0,n).forEach(r=>{const sn=r.doctor.replace('Dr. ','').split(' ')[0];cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
           h+=`<td>${cell}</td>`;
@@ -2189,8 +2313,8 @@ function renderSchedule(){
       sites.forEach(site=>{specs.forEach(sp=>{
         const n=getNeeded(ds,site,sp,null);
         const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&!r.shift_type);
-        let cell='';
-        if(!appr.length)cell=`<span class="slot-empty">—</span>`;
+        let cell=getExtra(ds,site,sp,null)?`<div>${extraTag(ds,site,sp,null)}</div>`:'';
+        if(!appr.length)cell+=`<span class="slot-empty">—</span>`;
         else{appr.slice(0,n).forEach(r=>{const sn=r.doctor.replace('Dr. ','').split(' ')[0];cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
         h+=`<td>${cell}</td>`;
       });});h+='</tr>';
@@ -2210,6 +2334,7 @@ function openMoveModal(id){
 async function applyMove(){
   const r=reqs.find(r=>r.id===moveId);if(!r)return;
   const newSite=document.getElementById('move-site').value;const newShift=isSpecial(r.date)?document.getElementById('move-shift').value:null;
+  if(r.status==='approved'){const why=approvalBlock({...r,site:newSite,shift_type:newShift});if(why){toast('⛔ '+why,4500);return;}}
   try{await dbUpd('requests',r.id,{site:newSite,shift_type:newShift});r.site=newSite;r.shift_type=newShift;closeModal('modal-move');renderSchedule();renderRequests();toast(T[lang].moved+newSite);}
   catch(e){toast(T[lang].errorPrefix+e.message);}
 }
@@ -2230,9 +2355,14 @@ function getConflicts(){
   });return out;
 }
 function renderConflicts(){
-  cflList=getConflicts();const wrap=document.getElementById('conflicts-list');
-  if(!cflList.length){wrap.innerHTML=`<div class="empty-state"><div class="icon">✅</div>${T[lang].noConflicts}</div>`;return;}
-  wrap.innerHTML=cflList.map((c,i)=>`<div class="conflict-item">
+  cflList=getConflicts();const wrap=document.getElementById('conflicts-list');const he=lang==='he';
+  const dbl=getDoubleBookings();
+  const dblHtml=dbl.length?`<div style="background:#fdecea;border:1px solid #f5c2bd;border-radius:var(--radius);padding:10px 12px;margin-bottom:12px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:6px">⚠️ ${he?'רופא משובץ בשתי מרפאות באותה משמרת — דחה/י את אחת מהן':'Doctor assigned to two clinics in the same shift — reject one of them'}</div>
+    ${dbl.map(l=>`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0;border-top:1px solid #f5c2bd;font-size:12px"><strong>${l[0].doctor}</strong> · ${l[0].date}${l[0].shift_type?' · '+shiftName(l[0].shift_type):''} ${l.map(r=>`<span style="display:inline-flex;gap:4px;align-items:center">${siteBadge(r.site)}<button class="btn btn-danger btn-sm" onclick="setStatus(${r.id},'rejected').then(renderConflicts)">✗</button></span>`).join(' ')}</div>`).join('')}
+  </div>`:'';
+  if(!cflList.length){wrap.innerHTML=dblHtml+(dbl.length?'':`<div class="empty-state"><div class="icon">✅</div>${T[lang].noConflicts}</div>`);return;}
+  wrap.innerHTML=dblHtml+cflList.map((c,i)=>`<div class="conflict-item">
     <div><div style="font-size:13px;font-weight:600">${c.date} · ${c.site} · ${specLbl(c.specialty)}${c.shift_type?' · '+c.shift_type:''}</div>
     <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.approved.length} ${T[lang].statuses.approved} · ${c.pending.length} ${T[lang].statuses.pending} · ${lang==='he'?'קיבולת:':'capacity:'} ${c.needed}</div></div>
     <button class="btn btn-warn btn-sm" onclick="openCflModal(${i})">${lang==='he'?'פתור →':'Resolve →'}</button>
@@ -2249,6 +2379,8 @@ function openCflModal(i){
 async function applyConflict(){
   const c=cflList[cflIdx];const all=[...c.approved,...c.pending];
   if(all.filter(r=>document.getElementById('cr-'+r.id)?.checked).length>c.needed){toast(lang==='he'?`בחר לכל היותר ${c.needed}`:`Select at most ${c.needed}`);return;}
+  const dbl=all.find(r=>document.getElementById('cr-'+r.id)?.checked&&otherClinicReq(r.doctor,r.date,r.shift_type,r.site,['approved'],[r.id]));
+  if(dbl){toast('⛔ '+(lang==='he'?`${dbl.doctor} כבר משובץ/ת במרפאה אחרת באותה משמרת`:`${dbl.doctor} is already assigned to another clinic in this shift`),4500);return;}
   sync(true);try{await Promise.all(all.map(r=>{const s=document.getElementById('cr-'+r.id)?.checked?'approved':'rejected';r.status=s;return dbUpd('requests',r.id,{status:s});}));closeModal('modal-conflict');renderConflicts();renderRequests();toast(T[lang].resolved);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
 }
 
@@ -2273,6 +2405,8 @@ async function approveGiveaway(swapId){
   const s=swaps.find(s=>s.id===swapId);if(!s)return;
   const origReq=reqs.find(r=>r.id===s.requester_req_id);if(!origReq)return;
   const claimer=s.target_doctor;const claimerSpec=getDocSpec(claimer)||s.specialty;
+  const busy=otherClinicReq(claimer,origReq.date,origReq.shift_type,origReq.site,['approved'],[origReq.id]);
+  if(busy){toast('⛔ '+(lang==='he'?`${claimer} כבר משובץ/ת ב${siteName(busy.site)} באותה משמרת`:`${claimer} is already assigned to ${siteName(busy.site)} in that shift`),4500);return;}
   sync(true);try{
     await dbUpd('requests',origReq.id,{doctor:claimer,specialty:claimerSpec,status:'approved'});
     origReq.doctor=claimer;origReq.specialty=claimerSpec;origReq.status='approved';
@@ -2310,6 +2444,11 @@ function renderAdminSwaps(){
 async function approveSwap(swapId){
   const s=swaps.find(s=>s.id===swapId);if(!s)return;
   const rA=reqs.find(r=>r.id===s.requester_req_id);const rB=s.target_req_id?reqs.find(r=>r.id===s.target_req_id):null;
+  if(rA&&rB){
+    const b1=otherClinicReq(rA.doctor,rB.date,rB.shift_type,rB.site,['approved'],[rA.id,rB.id]);
+    const b2=otherClinicReq(rB.doctor,rA.date,rA.shift_type,rA.site,['approved'],[rA.id,rB.id]);
+    if(b1||b2){toast('⛔ '+(lang==='he'?`לאחר ההחלפה ${(b1?rA:rB).doctor} יהיה/תהיה בשתי מרפאות באותה משמרת`:`After the swap ${(b1?rA:rB).doctor} would be in two clinics in the same shift`),4500);return;}
+  }
   sync(true);try{
     if(rA&&rB){const[tS,tSh,tD]=[rA.site,rA.shift_type,rA.date];await dbUpd('requests',rA.id,{site:rB.site,shift_type:rB.shift_type,date:rB.date});await dbUpd('requests',rB.id,{site:tS,shift_type:tSh,date:tD});rA.site=rB.site;rA.shift_type=rB.shift_type;rA.date=rB.date;rB.site=tS;rB.shift_type=tSh;rB.date=tD;}
     await dbUpd('swaps',swapId,{admin_status:'approved',status:'swap_approved'});s.admin_status='approved';s.status='swap_approved';
@@ -2341,7 +2480,12 @@ async function autoSchedule(){
       const already=reqs.filter(r=>r.date===date&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type==(st||null)).length;
       const slots=n-already;
       const candidates=[...pr].sort((a,b)=>(counts[a.doctor]||0)-(counts[b.doctor]||0)||(a.id-b.id));
-      candidates.forEach((r,i)=>{if(i<slots&&slots>0){r.status='approved';counts[r.doctor]=(counts[r.doctor]||0)+1;app++;updates.push({id:r.id,s:'approved'});}else{r.status='rejected';rej++;updates.push({id:r.id,s:'rejected'});}});
+      let filled=0;
+      candidates.forEach(r=>{
+        const busy=otherClinicReq(r.doctor,r.date,r.shift_type,r.site,['approved'],[r.id]);
+        if(filled<slots&&!busy){r.status='approved';filled++;counts[r.doctor]=(counts[r.doctor]||0)+1;app++;updates.push({id:r.id,s:'approved'});}
+        else{r.status='rejected';rej++;updates.push({id:r.id,s:'rejected'});}
+      });
     }
     const bs=10;for(let i=0;i<updates.length;i+=bs)await Promise.all(updates.slice(i,i+bs).map(u=>dbUpd('requests',u.id,{status:u.s})));
     renderRequests();renderStats();toast(T[lang].autoResult+app+T[lang].autoRejected+rej);
