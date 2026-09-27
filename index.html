@@ -1398,15 +1398,32 @@ async function cancelExchangeReq(id){try{await dbDel('swaps',id);swaps=swaps.fil
 // ══════════════════════════════════════
 // FINAL SCHEDULE (DOCTOR)
 // ══════════════════════════════════════
+let fsFilterSite='';
+let fsFilterSpec='';
 function renderFinalScheduleDoctor(){
   const container=document.getElementById('final-sched-container');
   const pubMonths=Object.entries(publishedMonths).filter(([k,v])=>v).map(([k])=>k).sort();
   if(!pubMonths.length){container.innerHTML=`<div class="card"><div class="empty-state"><div class="icon">📅</div>${T[lang].noSchedule}</div></div>`;return;}
-  container.innerHTML=pubMonths.map(mk=>{const[y,m]=mk.split('-').map(Number);return buildFinalHTML(y,m);}).join('');
+  const L=T[lang];
+  const filterBar=`<div class="card" style="margin-bottom:12px">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select id="fs-filter-site" onchange="fsFilterSite=this.value;renderFinalScheduleDoctor()">
+        <option value="">${lang==='he'?'כל האתרים':'All sites'}</option>
+        ${SITES.map(s=>`<option value="${s}" ${fsFilterSite===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <select id="fs-filter-spec" onchange="fsFilterSpec=this.value;renderFinalScheduleDoctor()">
+        <option value="">${lang==='he'?'כל ההתמחויות':'All specialties'}</option>
+        <option value="ortho" ${fsFilterSpec==='ortho'?'selected':''}>${L.specialty.ortho}</option>
+        <option value="pedia" ${fsFilterSpec==='pedia'?'selected':''}>${L.specialty.pedia}</option>
+        <option value="internal" ${fsFilterSpec==='internal'?'selected':''}>${L.specialty.internal}</option>
+      </select>
+    </div>
+  </div>`;
+  container.innerHTML=filterBar+pubMonths.map(mk=>{const[y,m]=mk.split('-').map(Number);return buildFinalHTML(y,m);}).join('');
 }
 function buildFinalHTML(y,m){
   const L=T[lang];const dim=new Date(y,m,0).getDate();
-  const specs=['ortho','pedia','internal'];const specShort={ortho:lang==='he'?'אורתו':'Ortho',pedia:lang==='he'?'ילדים':'Pedia',internal:lang==='he'?'פנימית':'Int'};const sites=SITES;
+  const specs=fsFilterSpec?[fsFilterSpec]:['ortho','pedia','internal'];const specShort={ortho:lang==='he'?'אורתו':'Ortho',pedia:lang==='he'?'ילדים':'Pedia',internal:lang==='he'?'פנימית':'Int'};const sites=fsFilterSite?[fsFilterSite]:SITES;
   let html=`<div class="card" style="margin-bottom:12px">
     <div style="font-size:15px;font-weight:600;margin-bottom:8px">${L.months[m-1]} ${y} — ${lang==='he'?'לוח סופי':'Final Schedule'} <span style="font-size:12px;font-weight:400;color:var(--success)">✓ ${lang==='he'?'פורסם':'Published'}</span></div>
     <div class="legend">
