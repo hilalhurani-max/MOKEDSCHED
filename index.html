@@ -202,6 +202,16 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
 .publish-dot{width:10px;height:10px;border-radius:50%;background:var(--success);display:inline-block}
 .publish-dot.off{background:var(--text3)}
 
+/* ── ROLES / TODAY ── */
+.role-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-size:13px}
+.role-bar:empty{display:none}
+.role-pill{background:var(--accent-light);color:var(--accent);border-radius:20px;padding:3px 10px;font-weight:600;font-size:12px}
+.today-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.today-site{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.today-site h4{margin:0 0 8px;font-size:14px}
+.today-row{display:flex;gap:8px;padding:5px 0;border-top:1px solid var(--border);font-size:13px;align-items:baseline}
+.today-row .sp{min-width:78px;color:var(--text2);font-size:12px}
+.today-row .none{color:var(--text3)}
 /* ── MONTHLY REPORT ── */
 .report-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
 .report-table{width:100%;border-collapse:collapse;font-size:13px;overflow-x:auto}
@@ -325,6 +335,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
       <button class="login-back" onclick="loginBack()" id="btn-back">← חזרה</button>
     </div>
     <button class="lang-btn" onclick="toggleLang()" id="login-lang-btn">EN</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:12px;margin-top:4px" onclick="openStaffLogin()">🔒 <span class="t" data-he="כניסת הנהלה / מזכירות" data-en="Management / secretary login">כניסת הנהלה / מזכירות</span></button>
   </div>
 </div>
 
@@ -432,11 +443,24 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
       </div>
     </div>
 
+    <!-- ══ VIEWER (secretary, read-only) ══ -->
+    <div class="panel" id="panel-viewer">
+      <div class="role-bar" id="viewer-role-bar"></div>
+      <div class="doc-inner-tabs">
+        <button class="ditab active" id="vtab-btn-today" onclick="showViewerTab('today')">📍 <span class="t" data-he="מי עובד היום" data-en="Who works today">מי עובד היום</span></button>
+        <button class="ditab" id="vtab-btn-sched" onclick="showViewerTab('sched')">📅 <span class="t" data-he="לוח משמרות" data-en="Schedule">לוח משמרות</span></button>
+      </div>
+      <div id="vtab-today"><div id="viewer-today-container"></div></div>
+      <div id="vtab-sched" style="display:none"><div id="viewer-sched-container"></div></div>
+    </div>
+
     <!-- ══ ADMIN ══ -->
     <div class="panel" id="panel-admin">
+      <div class="role-bar" id="admin-role-bar"></div>
       <div class="stats-row" id="admin-stats"></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div class="admin-inner-tabs">
+          <button class="itab" id="itab-today" onclick="showAdminTab('today')">📍 <span class="t" data-he="היום" data-en="Today">היום</span></button>
           <button class="itab active" id="itab-req" onclick="showAdminTab('req')"><span class="t" data-he="בקשות" data-en="Requests">בקשות</span></button>
           <button class="itab" id="itab-sched" onclick="showAdminTab('sched')"><span class="t" data-he="לוח" data-en="Schedule">לוח</span></button>
           <button class="itab" id="itab-publish" onclick="showAdminTab('publish')">📢 <span class="t" data-he="פרסום" data-en="Publish">פרסום</span></button>
@@ -447,14 +471,17 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
           <button class="itab" id="itab-holidays" onclick="showAdminTab('holidays')"><span class="t" data-he="חגים" data-en="Holidays">חגים</span></button>
           <button class="itab" id="itab-doctors" onclick="showAdminTab('doctors')"><span class="t" data-he="רופאים" data-en="Doctors">רופאים</span></button>
           <button class="itab" id="itab-links" onclick="showAdminTab('links')"><span class="t" data-he="שתף" data-en="Share">שתף</span></button>
-          <button class="itab" id="itab-password" onclick="showAdminTab('password')">🔑 <span class="t" data-he="סיסמת מנהל" data-en="Admin Password">סיסמת מנהל</span></button>
+          <button class="itab" id="itab-password" onclick="showAdminTab('password')">🔑 <span class="t" data-he="סיסמאות והרשאות" data-en="Passwords &amp; Access">סיסמאות והרשאות</span></button>
         </div>
         <div style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-warn btn-sm" onclick="autoSchedule()">⚡ <span class="t" data-he="סידור אוטומטי" data-en="Auto-Schedule">סידור אוטומטי</span></button>
+          <button class="btn btn-warn btn-sm" id="btn-autosched" onclick="autoSchedule()">⚡ <span class="t" data-he="סידור אוטומטי" data-en="Auto-Schedule">סידור אוטומטי</span></button>
           <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
           <button class="btn btn-ghost btn-sm" onclick="loadAll()">↺</button>
         </div>
       </div>
+
+      <!-- TODAY -->
+      <div id="tab-today" style="display:none"><div id="admin-today-container"></div></div>
 
       <!-- REQUESTS -->
       <div id="tab-req">
@@ -591,6 +618,11 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
             <button class="btn btn-primary" style="justify-content:center" onclick="changeAdminPw()"><span class="t" data-he="שמור סיסמה חדשה" data-en="Save new password">שמור סיסמה חדשה</span></button>
             <div style="font-size:11px;color:var(--text3);line-height:1.5" class="t" data-he="הסיסמה החדשה תקפה מיד בכל המכשירים." data-en="The new password takes effect immediately on all devices.">הסיסמה החדשה תקפה מיד בכל המכשירים.</div>
           </div>
+        </div>
+        <div class="card">
+          <div class="card-title">👥 <span class="t" data-he="גישה למנהלים ומזכירות" data-en="Access for managers &amp; secretary">גישה למנהלים ומזכירות</span></div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5" class="t" data-he="לכל תפקיד סיסמה משלו. הם נכנסים דרך אותו כפתור 'מנהל' ורואים רק את מה שמותר להם." data-en="Each role gets its own password. They log in through the same 'Admin' button and see only what their role allows.">לכל תפקיד סיסמה משלו. הם נכנסים דרך אותו כפתור 'מנהל' ורואים רק את מה שמותר להם.</div>
+          <div id="role-access-list"></div>
         </div>
       </div>
 
@@ -912,7 +944,9 @@ function toggleLang(){
   lang=lang==='he'?'en':'he';
   applyLang();
   renderCal();renderMyReport();
+  if(adminOk)applyRoleUI();
   if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
+  if(document.getElementById('panel-viewer').classList.contains('active'))showViewerTab(viewerTab);
 }
 
 function populateFilterSelects(){
@@ -921,7 +955,7 @@ function populateFilterSelects(){
   const fsp=document.getElementById('f-spec');if(fsp){fsp.innerHTML=`<option value="">${L.filterSpec}</option><option value="ortho">${L.specialty.ortho}</option><option value="pedia">${L.specialty.pedia}</option><option value="internal">${L.specialty.internal}</option>`;}
   const fsh=document.getElementById('f-shift');if(fsh){fsh.innerHTML=`<option value="">${L.filterShift}</option><option value="regular">${L.shifts.regular}</option><option value="morning">${L.shifts.morning}</option><option value="evening">${L.shifts.evening}</option>`;}
   // Repopulate doctor filter keeping current value
-  const fdoc=document.getElementById('f-doctor');if(fdoc){const cur=fdoc.value;fdoc.innerHTML=`<option value="">${L.filterDoctor}</option>`;getAllDocs().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;fdoc.appendChild(o);});fdoc.value=cur;}
+  const fdoc=document.getElementById('f-doctor');if(fdoc){const cur=fdoc.value;fdoc.innerHTML=`<option value="">${L.filterDoctor}</option>`;getAllDocs().filter(inScope).sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;fdoc.appendChild(o);});fdoc.value=cur;}
 }
 
 function populateDaySelect(){
@@ -964,13 +998,59 @@ async function sha256(txt){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+const NO_TABLE_RE=/app_settings|PGRST205|42P01|does not exist/i;
+// All saved settings rows, keyed by setting name. {} if the table isn't set up yet.
+async function loadSettingsMap(){
+  try{const rows=await dbGet('app_settings');const m={};rows.forEach(r=>m[r.key]=r);return m;}
+  catch(e){if(!NO_TABLE_RE.test(e.message))throw e;return{};}
+}
 // Returns {row, hash}. row is null if no password saved yet (then the default is used).
 async function getAdminPwRecord(){
-  try{const rows=await dbGet('app_settings','key=eq.admin_pw_hash');if(rows&&rows.length)return{row:rows[0],hash:rows[0].value};}
-  catch(e){if(!/app_settings|PGRST205|42P01|does not exist/i.test(e.message))throw e;} // only fall back to default if the table isn't set up yet
+  const m=await loadSettingsMap();
+  if(m.admin_pw_hash)return{row:m.admin_pw_hash,hash:m.admin_pw_hash.value};
   return{row:null,hash:await sha256(ADMIN_PW_DEFAULT)};
 }
-async function verifyAdminPw(pw){const rec=await getAdminPwRecord();return(await sha256(pw))===rec.hash;}
+// Which role does this password belong to? null if none. Main admin wins on a tie.
+async function roleForPassword(pw){
+  if(!pw)return null;
+  const m=await loadSettingsMap();const h=await sha256(pw);
+  const adminHash=m.admin_pw_hash?m.admin_pw_hash.value:await sha256(ADMIN_PW_DEFAULT);
+  if(h===adminHash)return'admin';
+  for(const r of['ortho','pedia','internal','secretary']){const row=m[ROLE_KEYS[r]];if(row&&row.value&&row.value===h)return r;}
+  return null;
+}
+async function verifyAdminPw(pw){return(await roleForPassword(pw))==='admin';}
+async function renderRoleAccess(){
+  const box=document.getElementById('role-access-list');if(!box)return;const he=lang==='he';
+  let m={};try{m=await loadSettingsMap();}catch(e){box.innerHTML=`<div style="color:var(--danger);font-size:12px">${T[lang].errorPrefix+e.message}</div>`;return;}
+  box.innerHTML=['ortho','pedia','internal','secretary'].map(r=>{
+    const on=!!(m[ROLE_KEYS[r]]&&m[ROLE_KEYS[r]].value);
+    return`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border)">
+      <div style="min-width:170px;flex:1"><strong style="font-size:13px">${roleLabel(r)}</strong><br>
+        <span style="font-size:11px;color:${on?'var(--success)':'var(--text3)'}">${on?(he?'● פעיל':'● Active'):(he?'○ לא הוגדרה סיסמה':'○ No password set')}</span></div>
+      <input type="text" id="rp-${r}" placeholder="${he?'סיסמה חדשה':'New password'}" style="width:150px" autocomplete="off">
+      <button class="btn btn-primary btn-sm" onclick="saveRolePw('${r}')">${on?(he?'שנה':'Change'):(he?'הפעל':'Enable')}</button>
+      ${on?`<button class="btn btn-danger btn-sm" onclick="disableRolePw('${r}')">${he?'בטל גישה':'Remove access'}</button>`:''}
+    </div>`;}).join('')+`<div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">${he?'מנהל/ת התמחות: רואה ומאשר/ת בקשות, לוח, קונפליקטים, החלפות ודוח — רק של ההתמחות שלו/ה. מזכירות: צפייה בלבד ב"מי עובד היום" ובלוח שפורסם.':'Specialty manager: sees and approves requests, schedule, conflicts, swaps and report — for their specialty only. Secretary: view-only "Who works today" and the published schedule.'}</div>`;
+}
+async function saveRolePw(r){
+  const he=lang==='he';const pw=(document.getElementById('rp-'+r).value||'').trim();
+  if(pw.length<6){toast(he?'לפחות 6 תווים':'At least 6 characters');return;}
+  try{
+    const m=await loadSettingsMap();const h=await sha256(pw);
+    const adminHash=m.admin_pw_hash?m.admin_pw_hash.value:await sha256(ADMIN_PW_DEFAULT);
+    const clash=h===adminHash||['ortho','pedia','internal','secretary'].some(o=>o!==r&&m[ROLE_KEYS[o]]&&m[ROLE_KEYS[o]].value===h);
+    if(clash){toast(he?'הסיסמה כבר בשימוש לתפקיד אחר — בחר סיסמה אחרת':'That password is already used by another role — pick a different one');return;}
+    const row=m[ROLE_KEYS[r]];
+    if(row)await dbUpd('app_settings',row.id,{value:h});else await dbIns('app_settings',{key:ROLE_KEYS[r],value:h});
+    toast('✓ '+roleLabel(r));renderRoleAccess();
+  }catch(e){toast(NO_TABLE_RE.test(e.message)?(he?'יש להריץ קודם את קוד ה-SQL ליצירת app_settings':'Run the app_settings setup SQL first'):T[lang].errorPrefix+e.message);}
+}
+async function disableRolePw(r){
+  const he=lang==='he';
+  try{const m=await loadSettingsMap();const row=m[ROLE_KEYS[r]];if(row)await dbUpd('app_settings',row.id,{value:''});toast((he?'הגישה בוטלה: ':'Access removed: ')+roleLabel(r));renderRoleAccess();}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
 async function changeAdminPw(){
   const he=lang==='he';const msg=document.getElementById('apw-msg');
   const show=(t,ok)=>{msg.textContent=t;msg.style.color=ok?'var(--success)':'var(--danger)';msg.style.display='block';};
@@ -1013,6 +1093,19 @@ const now=new Date();
 let calY=now.getFullYear(),calM=now.getMonth()+1;
 let curDoc=null,curSpec=null,selDate=null,selShift='morning';
 let adminOk=false,pendBtn=null;
+let adminRole=null; // 'admin' | 'ortho' | 'pedia' | 'internal' | 'secretary'
+const ROLE_KEYS={admin:'admin_pw_hash',ortho:'pw_ortho',pedia:'pw_pedia',internal:'pw_internal',secretary:'pw_secretary'};
+const scopeSpec=()=>['ortho','pedia','internal'].includes(adminRole)?adminRole:null;
+const inScope=x=>!scopeSpec()||x.specialty===scopeSpec();
+function lockSpecSel(id){const s=document.getElementById(id);if(!s)return;const sp=scopeSpec();if(sp){s.value=sp;s.disabled=true;}else s.disabled=false;}
+function roleLabel(r){const he=lang==='he';
+  if(r==='admin')return he?'מנהל ראשי':'Main admin';
+  if(r==='secretary')return he?'מזכירות (צפייה בלבד)':'Secretary (view only)';
+  return (he?'מנהל/ת ':'')+specLbl(r)+(he?'':' manager');}
+const ADMIN_TABS_BY_ROLE={
+  admin:['today','req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','password'],
+  manager:['today','req','sched','report','conflicts','exchange']
+};
 let cflList=[],cflIdx=null,moveId=null;
 let pinBuffer='';
 let loginSelectedSpec='',loginSelectedName='';
@@ -1071,6 +1164,8 @@ async function loadAll(){
     try{publishedMonths=await loadPublished();}catch(e){publishedMonths={};}
     renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();renderFinalScheduleDoctor();renderMyReport();
     if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
+    if(document.getElementById('panel-viewer').classList.contains('active'))showViewerTab(viewerTab);
+    if(document.getElementById('tab-today')&&document.getElementById('tab-today').style.display!=='none')renderToday('admin-today-container');
   }catch(e){toast(T[lang].errorPrefix+e.message);}
   finally{sync(false);}
 }
@@ -1113,7 +1208,7 @@ function populateDoctorFilter(){
   const sel=document.getElementById('f-doctor');if(!sel)return;
   const cur=sel.value;
   sel.innerHTML=`<option value="">${T[lang].filterDoctor}</option>`;
-  getAllDocs().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;sel.appendChild(o);});
+  getAllDocs().filter(inScope).sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;sel.appendChild(o);});
   sel.value=cur;
 }
 function updateExchangeNotif(){
@@ -1185,17 +1280,25 @@ function showPanel(name,btn){
   }
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.view-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(name==='admin'&&adminRole==='secretary'){
+    document.getElementById('panel-viewer').classList.add('active');if(btn)btn.classList.add('active');
+    showViewerTab(viewerTab);return;
+  }
   document.getElementById('panel-'+name).classList.add('active');
   if(btn)btn.classList.add('active');
-  if(name==='admin')renderAdmin();
+  if(name==='admin'){renderAdmin();const first=document.querySelector('.admin-inner-tabs .itab.active');if(!first||first.style.display==='none')showAdminTab('req');}
 }
 async function checkPw(){
-  let ok=false;
-  try{ok=await verifyAdminPw(document.getElementById('pw-input').value);}catch(e){toast(T[lang].errorPrefix+e.message);return;}
-  if(ok){adminOk=true;document.getElementById('pw-screen').style.display='none';showPanel('admin',pendBtn);}
+  let role=null;
+  try{role=await roleForPassword(document.getElementById('pw-input').value);}catch(e){toast(T[lang].errorPrefix+e.message);return;}
+  if(role){adminOk=true;adminRole=role;document.getElementById('pw-screen').style.display='none';applyRoleUI();showPanel('admin',pendBtn);toast('✓ '+roleLabel(role));}
   else{document.getElementById('pw-error').style.display='block';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
 }
-function cancelAdmin(){document.getElementById('pw-screen').style.display='none';document.querySelectorAll('.view-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));}
+function openStaffLogin(){
+  document.getElementById('login-screen').style.display='none';
+  showPanel('admin',document.getElementById('tab-admin-btn'));
+}
+function cancelAdmin(){document.getElementById('pw-screen').style.display='none';if(!curDoc&&!adminOk)document.getElementById('login-screen').style.display='flex';document.querySelectorAll('.view-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));}
 function showDocTab(name){
   ['myshifts','finalschedule','exchange','myreport'].forEach(t=>{
     document.getElementById('dtab-'+t).style.display=t===name?'':'none';
@@ -1206,7 +1309,9 @@ function showDocTab(name){
   if(name==='myreport')renderMyReport();
 }
 function showAdminTab(name){
-  ['req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','password'].forEach(t=>{
+  const allowed=adminRole==='admin'?ADMIN_TABS_BY_ROLE.admin:ADMIN_TABS_BY_ROLE.manager;
+  if(!allowed.includes(name))name='req';
+  ['today','req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','password'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'':'none';
     const b=document.getElementById('itab-'+t);if(b)b.classList.toggle('active',t===name);
   });
@@ -1218,7 +1323,8 @@ function showAdminTab(name){
   if(name==='rules')renderRules();
   if(name==='holidays')renderHolidays();
   if(name==='doctors')renderDoctors();
-  if(name==='password'){['apw-current','apw-new','apw-confirm'].forEach(i=>document.getElementById(i).value='');document.getElementById('apw-msg').style.display='none';}
+  if(name==='today')renderToday('admin-today-container');
+  if(name==='password'){renderRoleAccess();['apw-current','apw-new','apw-confirm'].forEach(i=>document.getElementById(i).value='');document.getElementById('apw-msg').style.display='none';}
   if(name==='links')renderLinks();
 }
 
@@ -1566,6 +1672,7 @@ async function submitVolunteer(){
 // MONTHLY REPORT
 // ══════════════════════════════════════
 function renderReport(){
+  lockSpecSel('report-spec');
   const selM=document.getElementById('report-month');const selSp=document.getElementById('report-spec');
   if(!selM||!selSp)return;
   const mk=selM.value;const specFilter=selSp.value;
@@ -1648,6 +1755,7 @@ function renderReport(){
 }
 
 function exportReportCSV(){
+  lockSpecSel('report-spec');
   const selM=document.getElementById('report-month');const selSp=document.getElementById('report-spec');
   if(!selM)return;
   const mk=selM.value;const specFilter=selSp?selSp.value:'';
@@ -1677,6 +1785,97 @@ function exportReportCSV(){
   a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
   a.download=`report_${mk}.csv`;a.click();
   toast(T[lang].csvExported);
+}
+
+// ══════════════════════════════════════
+// ROLES — UI, LOGOUT, SECRETARY VIEW, TODAY BOARD
+// ══════════════════════════════════════
+function applyRoleUI(){
+  const he=lang==='he';
+  const allowed=adminRole==='admin'?ADMIN_TABS_BY_ROLE.admin:ADMIN_TABS_BY_ROLE.manager;
+  document.querySelectorAll('.admin-inner-tabs .itab').forEach(b=>{b.style.display=allowed.includes(b.id.replace('itab-',''))?'':'none';});
+  const bar=`<span class="role-pill">👤 ${roleLabel(adminRole)}</span>${scopeSpec()?`<span style="font-size:12px;color:var(--text2)">${he?'רואה ומנהל/ת רק את '+specLbl(scopeSpec()):'Seeing and managing '+specLbl(scopeSpec())+' only'}</span>`:''}<button class="btn btn-ghost btn-sm" style="margin-inline-start:auto" onclick="logoutAdmin()">🚪 ${he?'יציאה':'Log out'}</button>`;
+  document.getElementById('admin-role-bar').innerHTML=adminRole==='admin'?`<span class="role-pill">👤 ${roleLabel('admin')}</span><button class="btn btn-ghost btn-sm" style="margin-inline-start:auto" onclick="logoutAdmin()">🚪 ${he?'יציאה':'Log out'}</button>`:bar;
+  document.getElementById('viewer-role-bar').innerHTML=bar;
+  // Reset filters that might hold another specialty from a previous login
+  ['f-spec','sched-filter-spec','report-spec'].forEach(id=>{const s=document.getElementById(id);if(s&&!scopeSpec()){s.disabled=false;}});
+  populateDoctorFilter();
+}
+function logoutAdmin(){
+  const wasScoped=!!scopeSpec();
+  adminOk=false;adminRole=null;
+  ['f-spec','sched-filter-spec','report-spec'].forEach(id=>{const s=document.getElementById(id);if(s){s.disabled=false;if(wasScoped)s.value='';}});
+  document.getElementById('admin-role-bar').innerHTML='';document.getElementById('viewer-role-bar').innerHTML='';
+  showPanel('doctor',document.getElementById('tab-doctor-btn'));
+  if(!curDoc){document.getElementById('login-step1').style.display='flex';document.getElementById('login-step2').style.display='none';document.getElementById('login-screen').style.display='flex';}
+  toast(lang==='he'?'התנתקת':'Logged out');
+}
+let viewerTab='today',viewerSchedMonth='';
+function showViewerTab(t){
+  viewerTab=t;
+  ['today','sched'].forEach(x=>{document.getElementById('vtab-'+x).style.display=x===t?'':'none';document.getElementById('vtab-btn-'+x).classList.toggle('active',x===t);});
+  if(t==='today')renderToday('viewer-today-container');else renderViewerSchedule();
+}
+// Read-only month grid for the secretary: published months only, no volunteer/move buttons
+function renderViewerSchedule(){
+  const box=document.getElementById('viewer-sched-container');const he=lang==='he';const L=T[lang];
+  const pub=Object.entries(publishedMonths).filter(([k,v])=>v).map(([k])=>k).sort();
+  if(!pub.length){box.innerHTML=`<div class="card"><div class="empty-state"><div class="icon">📅</div>${L.noSchedule}</div></div>`;return;}
+  const curMk=monthKey(now.getFullYear(),now.getMonth()+1);
+  if(!pub.includes(viewerSchedMonth))viewerSchedMonth=pub.includes(curMk)?curMk:pub[pub.length-1];
+  const[y,m]=viewerSchedMonth.split('-').map(Number);
+  const opts=pub.map(k=>{const[yy,mm]=k.split('-').map(Number);return`<option value="${k}" ${k===viewerSchedMonth?'selected':''}>${L.months[mm-1]} ${yy}</option>`;}).join('');
+  const bar=`<div class="card" style="margin-bottom:12px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <select onchange="viewerSchedMonth=this.value;renderViewerSchedule()">${opts}</select>
+    <select onchange="fsFilterSite=this.value;renderViewerSchedule()"><option value="">${he?'כל האתרים':'All sites'}</option>${SITES.map(x=>`<option value="${x}" ${fsFilterSite===x?'selected':''}>${L.report[x.toLowerCase()]||x}</option>`).join('')}</select>
+    <select onchange="fsFilterSpec=this.value;renderViewerSchedule()"><option value="">${he?'כל ההתמחויות':'All specialties'}</option>${['ortho','pedia','internal'].map(x=>`<option value="${x}" ${fsFilterSpec===x?'selected':''}>${specLbl(x)}</option>`).join('')}</select>
+  </div></div>`;
+  // Reuse the doctor's final-schedule renderer, then strip anything clickable
+  const saveDoc=curDoc;curDoc=null;let html=buildFinalHTML(y,m);curDoc=saveDoc;
+  const tmp=document.createElement('div');tmp.innerHTML=html;
+  tmp.querySelectorAll('.fs-slot-empty').forEach(e=>{e.removeAttribute('onclick');e.style.cursor='default';e.textContent='—';});
+  tmp.querySelectorAll('.legend-item').forEach(e=>{if(/★|\+/.test(e.textContent))e.remove();});
+  box.innerHTML=bar+tmp.innerHTML;
+}
+let todayDate='';
+function shiftTodayDate(delta){const d=new Date((todayDate||isoToday())+'T12:00:00');d.setDate(d.getDate()+delta);todayDate=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;rerenderToday();}
+function isoToday(){const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function rerenderToday(){
+  if(document.getElementById('panel-viewer').classList.contains('active'))renderToday('viewer-today-container');
+  else renderToday('admin-today-container');
+}
+// "Who works today": approved shifts for one day, per clinic and specialty
+function renderToday(containerId){
+  const box=document.getElementById(containerId);if(!box)return;
+  const he=lang==='he';const L=T[lang];
+  const ds=todayDate||isoToday();const isToday=ds===isoToday();
+  const dow=new Date(ds+'T12:00:00').getDay();const special=isSpecial(ds);const hn=holName(ds);
+  const[y,m,d]=ds.split('-');
+  const dayReqs=reqs.filter(r=>r.date===ds&&r.status==='approved');
+  let h=`<div class="card"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <div class="card-title" style="margin-bottom:0">📍 ${isToday?(he?'מי עובד היום':'Who works today'):(he?'מי עובד ב-':'Who works on ')} · ${L.days[dow]} ${d}/${m}/${y}${hn?` · <span style="color:var(--warn)">${hn}</span>`:''}</div>
+    <div style="margin-inline-start:auto;display:flex;gap:6px;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="shiftTodayDate(-1)">${he?'▸':'◂'}</button>
+      <input type="date" value="${ds}" onchange="todayDate=this.value;rerenderToday()" style="font-size:12px">
+      <button class="btn btn-ghost btn-sm" onclick="shiftTodayDate(1)">${he?'◂':'▸'}</button>
+      ${isToday?'':`<button class="btn btn-primary btn-sm" onclick="todayDate='';rerenderToday()">${he?'היום':'Today'}</button>`}
+    </div></div>`;
+  h+=`<div class="today-grid">`;
+  SITES.forEach(site=>{
+    h+=`<div class="today-site"><h4><span class="tag-${site.toLowerCase()}">${L.report[site.toLowerCase()]||site}</span></h4>`;
+    ['ortho','pedia','internal'].forEach(sp=>{
+      const rs=dayReqs.filter(r=>r.site===site&&r.specialty===sp);
+      let names;
+      if(special){
+        const part=st=>{const x=rs.filter(r=>r.shift_type===st).map(r=>r.doctor);return`${st==='morning'?'🌅':'🌙'} ${x.length?x.join(', '):`<span class="none">—</span>`}`;};
+        names=`${part('morning')}<br>${part('evening')}`;
+      }else names=rs.length?rs.map(r=>r.doctor).join(', '):`<span class="none">—</span>`;
+      h+=`<div class="today-row"><span class="sp">${specLbl(sp)}</span><span>${names}</span></div>`;
+    });
+    h+=`</div>`;
+  });
+  h+=`</div><div style="font-size:11px;color:var(--text3);margin-top:10px">${he?'מציג משמרות מאושרות בלבד.':'Showing approved shifts only.'}</div></div>`;
+  box.innerHTML=h;
 }
 
 // ══════════════════════════════════════
@@ -1809,20 +2008,22 @@ async function unpublishMonth(mk){
 // ══════════════════════════════════════
 function renderAdmin(){renderStats();populateMonthFilters();renderRequests();}
 function renderStats(){
-  const L=T[lang];
-  const pending=reqs.filter(r=>r.status==='pending').length;
-  const approved=reqs.filter(r=>r.status==='approved').length;
-  const needAttn=getConflicts().length+swaps.filter(s=>(s.status==='claimed'||s.target_approval==='accepted')&&s.admin_status==='pending').length;
+  const L=T[lang];const R=reqs.filter(inScope);
+  const pending=R.filter(r=>r.status==='pending').length;
+  const approved=R.filter(r=>r.status==='approved').length;
+  const needAttn=getConflicts().length+swaps.filter(s=>inScope(s)&&(s.status==='claimed'||s.target_approval==='accepted')&&s.admin_status==='pending').length;
   document.getElementById('admin-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-num">${reqs.length}</div><div class="stat-label">${L.totalRequests}</div></div>
+    <div class="stat-card"><div class="stat-num">${R.length}</div><div class="stat-label">${L.totalRequests}</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--warn)">${pending}</div><div class="stat-label">${L.statuses.pending}</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--success)">${approved}</div><div class="stat-label">${L.statuses.approved}</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--danger)">${needAttn}</div><div class="stat-label">${L.needAttention}</div></div>`;
 }
 function renderRequests(){
+  lockSpecSel('f-spec');
   const fs=document.getElementById('f-status')?.value||'';const fsp=document.getElementById('f-spec')?.value||'';const fsi=document.getElementById('f-site')?.value||'';const fdoc=document.getElementById('f-doctor')?.value||'';const fsh=document.getElementById('f-shift')?.value||'';const fmo=document.getElementById('f-month')?.value||'';
   const L=T[lang];
   const data=reqs.filter(r=>{
+    if(!inScope(r))return false;
     if(fs&&r.status!==fs)return false;if(fsp&&r.specialty!==fsp)return false;if(fsi&&r.site!==fsi)return false;if(fdoc&&r.doctor!==fdoc)return false;
     if(fsh==='regular'&&r.shift_type!=null)return false;if(fsh==='morning'&&r.shift_type!=='morning')return false;if(fsh==='evening'&&r.shift_type!=='evening')return false;
     if(fmo&&!r.date.startsWith(fmo))return false;
@@ -1861,8 +2062,8 @@ function adminEdit(id){
   const patch={site:newSite.toUpperCase(),shift_type:newShift||null};if(newStatus)patch.status=newStatus;
   dbUpd('requests',id,patch).then(()=>{r.site=patch.site;r.shift_type=patch.shift_type;if(newStatus)r.status=newStatus;renderRequests();renderSchedule();toast('✓');}).catch(e=>toast(T[lang].errorPrefix+e.message));
 }
-async function bulkApprove(){const p=reqs.filter(r=>r.status==='pending');sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'approved'})));p.forEach(r=>r.status='approved');renderRequests();toast(`✓ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
-async function bulkReject(){const p=reqs.filter(r=>r.status==='pending');sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'rejected'})));p.forEach(r=>r.status='rejected');renderRequests();toast(`✗ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+async function bulkApprove(){const p=reqs.filter(r=>r.status==='pending'&&inScope(r));sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'approved'})));p.forEach(r=>r.status='approved');renderRequests();toast(`✓ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+async function bulkReject(){const p=reqs.filter(r=>r.status==='pending'&&inScope(r));sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'rejected'})));p.forEach(r=>r.status='rejected');renderRequests();toast(`✗ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
 
 // ══════════════════════════════════════
 // SCHEDULE + MOVE
@@ -1873,6 +2074,7 @@ function populateSchedMonths(){
   for(let i=0;i<4;i++){const d=new Date(now.getFullYear(),now.getMonth()+i,1);const val=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;const o=document.createElement('option');o.value=val;o.textContent=`${L.months[d.getMonth()]} ${d.getFullYear()}`;sel.appendChild(o);}
 }
 function renderSchedule(){
+  lockSpecSel('sched-filter-spec');
   const sel=document.getElementById('sched-month');if(!sel||!sel.value)return;
   const L=T[lang];const[y,m]=sel.value.split('-').map(Number);const dim=new Date(y,m,0).getDate();
   const filterSite=document.getElementById('sched-filter-site')?.value||'';
@@ -1934,7 +2136,7 @@ function getConflicts(){
   const out=[];
   [...new Set(reqs.map(r=>r.date))].sort().forEach(date=>{
     const sp2=isSpecial(date)?['morning','evening']:[null];
-    SITES.forEach(site=>{['ortho','pedia','internal'].forEach(sp=>{sp2.forEach(st=>{
+    SITES.forEach(site=>{(scopeSpec()?[scopeSpec()]:['ortho','pedia','internal']).forEach(sp=>{sp2.forEach(st=>{
       const n=getNeeded(date,site,sp,st);
       const ap=reqs.filter(r=>r.date===date&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type==st);
       const pe=reqs.filter(r=>r.date===date&&r.site===site&&r.specialty===sp&&r.status==='pending'&&r.shift_type==st);
@@ -1971,7 +2173,7 @@ async function applyConflict(){
 function renderAdminExchange(){renderAdminGiveaways();renderAdminSwaps();}
 function renderAdminGiveaways(){
   const wrap=document.getElementById('admin-giveaways-list');
-  const claimed=swaps.filter(s=>s.type==='giveaway'&&s.status==='claimed'&&s.admin_status==='pending');
+  const claimed=swaps.filter(s=>inScope(s)&&s.type==='giveaway'&&s.status==='claimed'&&s.admin_status==='pending');
   const L=T[lang];
   if(!claimed.length){wrap.innerHTML=`<div class="empty-state" style="padding:16px"><div class="icon">🎁</div>${lang==='he'?'אין תביעות ממתינות לאישור':'No giveaway claims awaiting approval'}</div>`;return;}
   let h=`<table class="req-table"><thead><tr><th>${lang==='he'?'נותן':'Giver'}</th><th>${lang==='he'?'תובע':'Claimer'}</th><th>${lang==='he'?'פרטים':'Details'}</th><th></th></tr></thead><tbody>`;
@@ -2005,7 +2207,7 @@ async function rejectGiveaway(swapId){
 }
 function renderAdminSwaps(){
   const wrap=document.getElementById('admin-swaps-list');
-  const ready=swaps.filter(s=>s.type==='swap'&&s.target_approval==='accepted'&&s.admin_status==='pending');
+  const ready=swaps.filter(s=>inScope(s)&&s.type==='swap'&&s.target_approval==='accepted'&&s.admin_status==='pending');
   const L=T[lang];
   if(!ready.length){wrap.innerHTML=`<div class="empty-state" style="padding:16px"><div class="icon">⇄</div>${lang==='he'?'אין בקשות החלפה ממתינות לאישורך':'No swap requests awaiting your approval'}</div>`;return;}
   let h=`<table class="req-table"><thead><tr><th>${lang==='he'?'רופא א':'Doctor A'}</th><th>${lang==='he'?'רופא ב':'Doctor B'}</th><th>${lang==='he'?'פרטים':'Details'}</th><th></th></tr></thead><tbody>`;
@@ -2042,7 +2244,7 @@ async function autoSchedule(){
   showLoad(true,T[lang].autoSched);
   try{
     const counts={};reqs.filter(r=>r.status==='approved').forEach(r=>counts[r.doctor]=(counts[r.doctor]||0)+1);
-    const groups={};reqs.filter(r=>r.status==='pending').forEach(r=>{const k=`${r.date}||${r.site}||${r.specialty}||${r.shift_type||''}`;if(!groups[k])groups[k]=[];groups[k].push(r);});
+    const groups={};reqs.filter(r=>r.status==='pending'&&inScope(r)).forEach(r=>{const k=`${r.date}||${r.site}||${r.specialty}||${r.shift_type||''}`;if(!groups[k])groups[k]=[];groups[k].push(r);});
     const sorted=Object.entries(groups).sort(([ka],[kb])=>{
       const[da,sa,spa,sha]=ka.split('||');const[db,sb,spb,shb]=kb.split('||');
       return reqs.filter(r=>r.date===da&&r.site===sa&&r.specialty===spa&&r.status==='approved'&&r.shift_type==(sha||null)).length-reqs.filter(r=>r.date===db&&r.site===sb&&r.specialty===spb&&r.status==='approved'&&r.shift_type==(shb||null)).length;
@@ -2158,7 +2360,7 @@ function openWA(){window.open('https://wa.me/?text='+encodeURIComponent(document
 function exportCSV(){
   const L=T[lang];
   const h=`ID,${L.report.doctor},${L.report.spec},Date,Site,Shift,Status`;
-  const rows=reqs.map(r=>`${r.id},"${r.doctor}","${specLbl(r.specialty)}","${r.date}","${r.site}","${r.shift_type||L.shifts.regular}","${L.statuses[r.status]||r.status}"`);
+  const rows=reqs.filter(inScope).map(r=>`${r.id},"${r.doctor}","${specLbl(r.specialty)}","${r.date}","${r.site}","${r.shift_type||L.shifts.regular}","${L.statuses[r.status]||r.status}"`);
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent([h,...rows].join('\n'));a.download='schedule.csv';a.click();toast(T[lang].csvExported);
 }
 
