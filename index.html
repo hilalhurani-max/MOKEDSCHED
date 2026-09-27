@@ -379,6 +379,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
         <button class="ditab active" id="ditab-myshifts" onclick="showDocTab('myshifts')">📋 <span class="t" data-he="המשמרות שלי" data-en="My Shifts">המשמרות שלי</span></button>
         <button class="ditab" id="ditab-finalschedule" onclick="showDocTab('finalschedule')">📅 <span class="t" data-he="לוח סופי" data-en="Final Schedule">לוח סופי</span></button>
         <button class="ditab" id="ditab-exchange" onclick="showDocTab('exchange')">🔄 <span class="t" data-he="זמין &amp; החלפות" data-en="Available &amp; Swaps">זמין &amp; החלפות</span></button>
+        <button class="ditab" id="ditab-myreport" onclick="showDocTab('myreport')">📊 <span class="t" data-he="הדוח שלי" data-en="My Report">הדוח שלי</span></button>
       </div>
 
       <!-- MY SHIFTS -->
@@ -408,6 +409,9 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
 
       <!-- FINAL SCHEDULE -->
       <div id="dtab-finalschedule" style="display:none"><div id="final-sched-container"></div></div>
+
+      <!-- MY MONTHLY REPORT (doctor sees only their own) -->
+      <div id="dtab-myreport" style="display:none"><div id="my-report-container"></div></div>
 
       <!-- AVAILABLE & SWAPS -->
       <div id="dtab-exchange" style="display:none">
@@ -887,7 +891,7 @@ function applyLang(){
 function toggleLang(){
   lang=lang==='he'?'en':'he';
   applyLang();
-  renderCal();
+  renderCal();renderMyReport();
   if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
 }
 
@@ -1012,7 +1016,7 @@ async function loadAll(){
     try{holidays=await dbGet('holidays');}catch(e){holidays=[];}
     try{slotRules=await dbGet('slot_rules');}catch(e){slotRules=[];}
     try{publishedMonths=await loadPublished();}catch(e){publishedMonths={};}
-    renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();renderFinalScheduleDoctor();
+    renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();renderFinalScheduleDoctor();renderMyReport();
     if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
   }catch(e){toast(T[lang].errorPrefix+e.message);}
   finally{sync(false);}
@@ -1098,7 +1102,7 @@ function checkPin(){
   }else{document.getElementById('pin-error').textContent='❌ '+T[lang].pinWrong;pinBuffer='';updatePinDisplay();}
 }
 function logoutDoctor(){
-  curDoc=null;curSpec=null;pinBuffer='';
+  curDoc=null;curSpec=null;pinBuffer='';myReportMonth='';
   document.getElementById('login-specialty').value='';
   document.getElementById('login-name').innerHTML=`<option value="">${lang==='he'?'— בחר שם —':'— Select name —'}</option>`;
   document.getElementById('login-step1').style.display='flex';document.getElementById('login-step2').style.display='none';
@@ -1138,12 +1142,13 @@ function checkPw(){
 }
 function cancelAdmin(){document.getElementById('pw-screen').style.display='none';document.querySelectorAll('.view-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));}
 function showDocTab(name){
-  ['myshifts','finalschedule','exchange'].forEach(t=>{
+  ['myshifts','finalschedule','exchange','myreport'].forEach(t=>{
     document.getElementById('dtab-'+t).style.display=t===name?'':'none';
     const b=document.getElementById('ditab-'+t);if(b)b.classList.toggle('active',t===name);
   });
   if(name==='finalschedule')renderFinalScheduleDoctor();
   if(name==='exchange')renderExchangeTab();
+  if(name==='myreport')renderMyReport();
 }
 function showAdminTab(name){
   ['req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links'].forEach(t=>{
@@ -1615,6 +1620,89 @@ function exportReportCSV(){
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
   a.download=`report_${mk}.csv`;a.click();
+  toast(T[lang].csvExported);
+}
+
+// ══════════════════════════════════════
+// DOCTOR — MY MONTHLY REPORT (own data only)
+// ══════════════════════════════════════
+let myReportMonth='';
+function renderMyReport(){
+  const box=document.getElementById('my-report-container');if(!box)return;
+  const L=T[lang];const he=lang==='he';
+  if(!curDoc){box.innerHTML='';return;}
+  // Only months the director has published (final data)
+  const pubMonths=Object.entries(publishedMonths).filter(([k,v])=>v).map(([k])=>k).sort().reverse();
+  if(!pubMonths.length){box.innerHTML=`<div class="card"><div class="empty-state"><div class="icon">📊</div>${he?'עדיין אין חודש שפורסם. הדוח יופיע לאחר פרסום הלוח.':'No published month yet. Your report will appear once the schedule is published.'}</div></div>`;return;}
+  const curMk=monthKey(now.getFullYear(),now.getMonth()+1);
+  if(!pubMonths.includes(myReportMonth)){myReportMonth=pubMonths.find(k=>k<curMk)||pubMonths[0];}
+  const mk=myReportMonth;const[y,m]=mk.split('-').map(Number);
+  const inProgress=mk>=curMk;
+
+  const mine=reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&r.date.startsWith(mk)).sort((a,b)=>a.date.localeCompare(b.date)||(a.shift_type||'').localeCompare(b.shift_type||''));
+  const total=mine.length;
+  const reg=mine.filter(r=>!r.shift_type).length;
+  const morn=mine.filter(r=>r.shift_type==='morning').length;
+  const eve=mine.filter(r=>r.shift_type==='evening').length;
+
+  const monthOpts=pubMonths.map(k=>{const[yy,mm]=k.split('-').map(Number);return`<option value="${k}" ${k===mk?'selected':''}>${L.months[mm-1]} ${yy}</option>`;}).join('');
+  let h=`<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">📊 ${he?'הדוח החודשי שלי':'My Monthly Report'}</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select onchange="myReportMonth=this.value;renderMyReport()" style="font-size:12px;padding:5px 8px">${monthOpts}</select>
+        <button class="btn btn-primary btn-sm" onclick="exportMyReportCSV()">↓ CSV</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">${curDoc} · ${specLbl(curSpec)}${inProgress?` · <span style="color:var(--warning,#b7791f)">${he?'החודש עדיין בתהליך — הנתונים עשויים להשתנות':'Month in progress — figures may still change'}</span>`:''}</div>
+    <div class="report-summary-grid">
+      <div class="report-summary-card"><div class="report-summary-num" style="color:var(--accent)">${total}</div><div class="report-summary-label">${L.report.totalShifts}</div></div>
+      <div class="report-summary-card"><div class="report-summary-num">${reg}</div><div class="report-summary-label">${L.report.regular}</div></div>
+      <div class="report-summary-card"><div class="report-summary-num">${morn+eve}</div><div class="report-summary-label">🌅 ${morn} · 🌙 ${eve}</div></div>
+    </div>`;
+
+  // Per-clinic breakdown (only clinics where the doctor worked)
+  const sitesUsed=SITES.filter(site=>mine.some(r=>r.site===site));
+  if(sitesUsed.length){
+    h+=`<div style="overflow-x:auto;margin-bottom:14px"><table class="report-table"><thead><tr>
+      <th>${he?'מרפאה':'Clinic'}</th><th>${L.report.regular}</th><th>🌅 ${L.shifts.morning}</th><th>🌙 ${L.shifts.evening}</th><th>${L.report.total}</th></tr></thead><tbody>`;
+    sitesUsed.forEach(site=>{
+      const rs=mine.filter(r=>r.site===site);
+      h+=`<tr><td><span class="tag-${site.toLowerCase()}">${L.report[site.toLowerCase()]||site}</span></td>
+        <td>${rs.filter(r=>!r.shift_type).length}</td><td>${rs.filter(r=>r.shift_type==='morning').length}</td><td>${rs.filter(r=>r.shift_type==='evening').length}</td><td><strong>${rs.length}</strong></td></tr>`;
+    });
+    h+=`<tr class="total-row"><td>${L.report.total}</td><td>${reg}</td><td>${morn}</td><td>${eve}</td><td>${total}</td></tr></tbody></table></div>`;
+
+    // Shift list
+    h+=`<div class="card-title" style="font-size:13px">${he?'פירוט משמרות':'Shift details'}</div>
+      <div style="overflow-x:auto"><table class="report-table"><thead><tr><th>${he?'תאריך':'Date'}</th><th>${he?'יום':'Day'}</th><th>${he?'מרפאה':'Clinic'}</th><th>${he?'משמרת':'Shift'}</th></tr></thead><tbody>`;
+    mine.forEach(r=>{
+      const dow=new Date(r.date+'T12:00:00').getDay();
+      const[, mm,dd]=r.date.split('-');
+      const st=r.shift_type==='morning'?'🌅 '+L.shifts.morning:r.shift_type==='evening'?'🌙 '+L.shifts.evening:L.shifts.regular;
+      h+=`<tr><td>${dd}/${mm}</td><td>${L.days[dow]}</td><td><span class="tag-${r.site.toLowerCase()}">${L.report[r.site.toLowerCase()]||r.site}</span></td><td>${st}</td></tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }else{
+    h+=`<div class="empty-state"><div class="icon">📋</div>${he?'אין משמרות מאושרות בחודש זה.':'No approved shifts this month.'}</div>`;
+  }
+  h+=`</div>`;
+  box.innerHTML=h;
+}
+function exportMyReportCSV(){
+  if(!curDoc||!myReportMonth)return;
+  const L=T[lang];const mk=myReportMonth;
+  const mine=reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&r.date.startsWith(mk)).sort((a,b)=>a.date.localeCompare(b.date));
+  const lines=[[L.report.doctor,L.report.spec,'Date','Day','Clinic','Shift'].join(',')];
+  mine.forEach(r=>{
+    const dow=new Date(r.date+'T12:00:00').getDay();
+    const st=r.shift_type?L.shifts[r.shift_type]:L.shifts.regular;
+    lines.push([`"${curDoc}"`,`"${specLbl(curSpec)}"`,r.date,`"${L.days[dow]}"`,`"${L.report[r.site.toLowerCase()]||r.site}"`,`"${st}"`].join(','));
+  });
+  lines.push('');lines.push(`"${L.report.total}",,,,,${mine.length}`);
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(lines.join('\n'));
+  a.download=`my_report_${curDoc.replace(/[^\w֐-׿]+/g,'_')}_${mk}.csv`;a.click();
   toast(T[lang].csvExported);
 }
 
