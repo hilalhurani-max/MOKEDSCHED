@@ -662,6 +662,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
       <div class="shift-toggle">
         <button class="shift-btn active" id="btn-morning" onclick="selectShift('morning')">🌅 <span class="t" data-he="בוקר" data-en="Morning">בוקר</span></button>
         <button class="shift-btn" id="btn-evening" onclick="selectShift('evening')">🌙 <span class="t" data-he="ערב" data-en="Evening">ערב</span></button>
+        <button class="shift-btn" id="btn-both" onclick="selectShift('both')">☀️ <span class="t" data-he="שתיהן - כל היום" data-en="Both - all day">שתיהן - כל היום</span></button>
       </div>
     </div>
     <div id="m-warn" style="background:var(--warn-light);color:var(--warn);font-size:12px;padding:8px 11px;border-radius:8px;display:none;margin-top:6px"></div>
@@ -1364,7 +1365,7 @@ function renderCal(){
     grid.appendChild(cell);
   }
 }
-function selectShift(st){selShift=st;document.getElementById('btn-morning').classList.toggle('active',st==='morning');document.getElementById('btn-evening').classList.toggle('active',st==='evening');}
+function selectShift(st){selShift=st;['morning','evening','both'].forEach(x=>document.getElementById('btn-'+x).classList.toggle('active',st===x));}
 function openShiftModal(d,ds,special){
   if(!curDoc){toast(lang==='he'?'נא להתחבר תחילה':'Please log in first');return;}
   selDate=ds;selShift='morning';
@@ -1380,14 +1381,20 @@ function openShiftModal(d,ds,special){
 }
 async function submitRequest(){
   const site=document.getElementById('m-site').value;
-  const shiftType=isSpecial(selDate)?selShift:null;
-  if(reqs.find(r=>r.doctor===curDoc&&r.date===selDate&&r.site===site&&r.shift_type==shiftType)){
+  // "Both / all day" = two requests (morning + evening), so slots, approvals and reports keep working as before
+  const wanted=!isSpecial(selDate)?[null]:(selShift==='both'?['morning','evening']:[selShift]);
+  const toAdd=wanted.filter(st=>!reqs.find(r=>r.doctor===curDoc&&r.date===selDate&&r.site===site&&r.shift_type==st));
+  if(!toAdd.length){
     const w=document.getElementById('m-warn');w.textContent=T[lang].slotExists;w.style.display='block';return;
   }
   const btn=document.getElementById('submit-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
   try{
-    const ins=await dbIns('requests',{doctor:curDoc,specialty:curSpec,date:selDate,site,status:'pending',shift_type:shiftType});
-    reqs.push(ins[0]);closeModal('modal-shift');renderCal();renderMyReqs();toast(T[lang].requestSent);
+    for(const st of toAdd){
+      const ins=await dbIns('requests',{doctor:curDoc,specialty:curSpec,date:selDate,site,status:'pending',shift_type:st});
+      reqs.push(ins[0]);
+    }
+    closeModal('modal-shift');renderCal();renderMyReqs();
+    toast(selShift==='both'&&wanted.length===2?(lang==='he'?(toAdd.length===2?'✓ נשלחו בקשות לבוקר ולערב':'✓ נשלחה בקשה למשמרת החסרה (השנייה כבר קיימת)'):(toAdd.length===2?'✓ Morning + evening requests sent':'✓ Requested the missing shift (the other already existed)')):T[lang].requestSent);
   }catch(e){toast(T[lang].errorPrefix+e.message);}
   finally{btn.disabled=false;btn.textContent=lang==='he'?'שלח בקשה':'Submit request';}
 }
@@ -2116,7 +2123,7 @@ function renderRequests(){
   data.forEach(r=>{
     h+=`<tr><td style="font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap">${r.date}</td>
     <td>${r.doctor}</td><td>${specBadge(r.specialty)}</td><td>${siteBadge(r.site)}</td>
-    <td>${r.shift_type?shiftBadge(r.shift_type):`<span style="color:var(--text3);font-size:11px">${L.shifts.regular}</span>`}</td>
+    <td>${r.shift_type?shiftBadge(r.shift_type):`<span style="color:var(--text3);font-size:11px">${L.shifts.regular}</span>`}${r.shift_type&&reqs.some(o=>o.id!==r.id&&o.doctor===r.doctor&&o.date===r.date&&o.site===r.site&&o.shift_type&&o.shift_type!==r.shift_type&&o.status!=='rejected')?` <span title="${lang==='he'?'ביקש/ה את כל היום':'Requested the whole day'}" style="font-size:10px;color:var(--warn)">☀️${lang==='he'?'כל היום':'all day'}</span>`:''}</td>
     <td>${stBadge(r.status)}</td>
     <td style="display:flex;gap:4px;flex-wrap:wrap">
       ${r.status!=='approved'?`<button class="btn btn-success btn-sm" onclick="setStatus(${r.id},'approved')">${L.approveLabel}</button>`:''}
