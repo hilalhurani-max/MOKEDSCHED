@@ -170,7 +170,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
 .slot-l{background:var(--lin-light);color:var(--lin);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;cursor:pointer}
 .slot-t{background:var(--tamra-light);color:var(--tamra);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;cursor:pointer}
 .slot-k{background:var(--kfaryassif-light);color:var(--kfaryassif);font-size:10px;border-radius:4px;padding:1px 5px;display:inline-block;margin:1px;cursor:pointer}
-.slot-empty{color:var(--text3);font-style:italic;font-size:10px}
+.slot-empty{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-size:10px;font-weight:700;font-style:normal;margin:1px;padding:0 1px}
 .adm-weekend{background:#fff3c4}
 .adm-holiday{background:#ffddb0}
 
@@ -474,6 +474,8 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
             <div class="card-title" style="margin-bottom:0"><span class="t" data-he="לוח משמרות" data-en="Schedule">לוח משמרות</span></div>
             <select id="sched-month" onchange="renderSchedule()"></select>
+            <select id="sched-filter-site" onchange="renderSchedule()"><option value="">—</option><option value="ZVULUN">ZVULUN</option><option value="LIN">LIN</option><option value="TAMRA">TAMRA</option><option value="KFARYASSIF">KFAR YASSIF</option></select>
+            <select id="sched-filter-spec" onchange="renderSchedule()"></select>
             <span style="font-size:11px;color:var(--text2)" class="t" data-he="💡 לחץ על שם להעביר בין אתרים" data-en="💡 Click a name to move between sites">💡 לחץ על שם להעביר בין אתרים</span>
           </div>
           <div class="sched-scroll" id="sched-grid"></div>
@@ -877,6 +879,7 @@ function applyLang(){
   populateDaySelect();
   populateRShiftSelect();
   populateRSpecSelect();
+  populateSchedFilterSpec();
   document.getElementById('sync-label').textContent=T[lang].live;
   localStorage.setItem('clinicsched_lang',lang);
 }
@@ -911,6 +914,12 @@ function populateRSpecSelect(){
   const sel=document.getElementById('r-spec');if(!sel)return;
   const L=T[lang];
   sel.innerHTML=`<option value="ortho">${L.specialty.ortho}</option><option value="pedia">${L.specialty.pedia}</option><option value="internal">${L.specialty.internal}</option>`;
+}
+function populateSchedFilterSpec(){
+  const sel=document.getElementById('sched-filter-spec');if(!sel)return;
+  const cur=sel.value;const L=T[lang];
+  sel.innerHTML=`<option value="">${L.filterSpec}</option><option value="ortho">${L.specialty.ortho}</option><option value="pedia">${L.specialty.pedia}</option><option value="internal">${L.specialty.internal}</option>`;
+  sel.value=cur;
 }
 function populateReportMonthSelect(){
   const sel=document.getElementById('report-month');if(!sel||sel.options.length>1)return;
@@ -1722,7 +1731,9 @@ function populateSchedMonths(){
 function renderSchedule(){
   const sel=document.getElementById('sched-month');if(!sel||!sel.value)return;
   const L=T[lang];const[y,m]=sel.value.split('-').map(Number);const dim=new Date(y,m,0).getDate();
-  const specs=['ortho','pedia','internal'];const ss={ortho:lang==='he'?'אורתו':'Ortho',pedia:lang==='he'?'ילדים':'Pedia',internal:lang==='he'?'פנימית':'Int'};const sites=SITES;
+  const filterSite=document.getElementById('sched-filter-site')?.value||'';
+  const filterSpec=document.getElementById('sched-filter-spec')?.value||'';
+  const specs=filterSpec?[filterSpec]:['ortho','pedia','internal'];const ss={ortho:lang==='he'?'אורתו':'Ortho',pedia:lang==='he'?'ילדים':'Pedia',internal:lang==='he'?'פנימית':'Int'};const sites=filterSite?[filterSite]:SITES;
   let h=`<table class="sched-table"><thead><tr><th>${lang==='he'?'תאריך':'Date'}</th>`;
   sites.forEach(site=>specs.forEach(sp=>{h+=`<th><span class="tag-${site.toLowerCase()}">${site[0]}</span> ${ss[sp]}</th>`;}));
   h+='</tr></thead><tbody>';
