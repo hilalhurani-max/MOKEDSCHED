@@ -447,6 +447,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
           <button class="itab" id="itab-holidays" onclick="showAdminTab('holidays')"><span class="t" data-he="חגים" data-en="Holidays">חגים</span></button>
           <button class="itab" id="itab-doctors" onclick="showAdminTab('doctors')"><span class="t" data-he="רופאים" data-en="Doctors">רופאים</span></button>
           <button class="itab" id="itab-links" onclick="showAdminTab('links')"><span class="t" data-he="שתף" data-en="Share">שתף</span></button>
+          <button class="itab" id="itab-password" onclick="showAdminTab('password')">🔑 <span class="t" data-he="סיסמת מנהל" data-en="Admin Password">סיסמת מנהל</span></button>
         </div>
         <div style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-warn btn-sm" onclick="autoSchedule()">⚡ <span class="t" data-he="סידור אוטומטי" data-en="Auto-Schedule">סידור אוטומטי</span></button>
@@ -571,6 +572,25 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
           <div class="card-title"><span class="t" data-he="רשימת רופאים וקודים" data-en="Doctors &amp; PINs">רשימת רופאים וקודים</span></div>
           <p style="font-size:12px;color:var(--text2);margin-bottom:12px" class="t" data-he="שינויים נשמרים בבסיס הנתונים מיד. לחץ על קוד לאיפוס." data-en="Changes saved to database immediately. Click PIN to reset.">שינויים נשמרים בבסיס הנתונים מיד. לחץ על קוד לאיפוס.</p>
           <div class="doctor-cols" id="doctor-cols"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN PASSWORD -->
+      <div id="tab-password" style="display:none">
+        <div class="card" style="max-width:420px">
+          <div class="card-title">🔑 <span class="t" data-he="שינוי סיסמת מנהל" data-en="Change admin password">שינוי סיסמת מנהל</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px" class="t" data-he="סיסמה נוכחית" data-en="Current password">סיסמה נוכחית</div>
+              <input type="password" id="apw-current" style="width:100%" autocomplete="current-password"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px" class="t" data-he="סיסמה חדשה (לפחות 6 תווים)" data-en="New password (at least 6 characters)">סיסמה חדשה (לפחות 6 תווים)</div>
+              <input type="password" id="apw-new" style="width:100%" autocomplete="new-password"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px" class="t" data-he="אישור סיסמה חדשה" data-en="Confirm new password">אישור סיסמה חדשה</div>
+              <input type="password" id="apw-confirm" style="width:100%" autocomplete="new-password" onkeydown="if(event.key==='Enter')changeAdminPw()"></div>
+            <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" onchange="['apw-current','apw-new','apw-confirm'].forEach(i=>document.getElementById(i).type=this.checked?'text':'password')"> <span class="t" data-he="הצג סיסמאות" data-en="Show passwords">הצג סיסמאות</span></label>
+            <div id="apw-msg" style="font-size:12px;display:none"></div>
+            <button class="btn btn-primary" style="justify-content:center" onclick="changeAdminPw()"><span class="t" data-he="שמור סיסמה חדשה" data-en="Save new password">שמור סיסמה חדשה</span></button>
+            <div style="font-size:11px;color:var(--text3);line-height:1.5" class="t" data-he="הסיסמה החדשה תקפה מיד בכל המכשירים." data-en="The new password takes effect immediately on all devices.">הסיסמה החדשה תקפה מיד בכל המכשירים.</div>
+          </div>
         </div>
       </div>
 
@@ -939,7 +959,40 @@ function populateReportSpecSelect(){
 // ══════════════════════════════════════
 // STATE
 // ══════════════════════════════════════
-const ADMIN_PW='Moked2026';
+const ADMIN_PW_DEFAULT='Moked2026'; // used only until a password is saved in the app_settings table
+async function sha256(txt){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+// Returns {row, hash}. row is null if no password saved yet (then the default is used).
+async function getAdminPwRecord(){
+  try{const rows=await dbGet('app_settings','key=eq.admin_pw_hash');if(rows&&rows.length)return{row:rows[0],hash:rows[0].value};}
+  catch(e){if(!/app_settings|PGRST205|42P01|does not exist/i.test(e.message))throw e;} // only fall back to default if the table isn't set up yet
+  return{row:null,hash:await sha256(ADMIN_PW_DEFAULT)};
+}
+async function verifyAdminPw(pw){const rec=await getAdminPwRecord();return(await sha256(pw))===rec.hash;}
+async function changeAdminPw(){
+  const he=lang==='he';const msg=document.getElementById('apw-msg');
+  const show=(t,ok)=>{msg.textContent=t;msg.style.color=ok?'var(--success)':'var(--danger)';msg.style.display='block';};
+  const cur=document.getElementById('apw-current').value;
+  const nw=document.getElementById('apw-new').value;
+  const cf=document.getElementById('apw-confirm').value;
+  if(nw.length<6)return show(he?'הסיסמה החדשה חייבת להכיל לפחות 6 תווים':'New password must be at least 6 characters');
+  if(nw!==cf)return show(he?'הסיסמאות החדשות אינן תואמות':'The new passwords do not match');
+  try{
+    const rec=await getAdminPwRecord();
+    if((await sha256(cur))!==rec.hash)return show(he?'הסיסמה הנוכחית שגויה':'Current password is incorrect');
+    const h=await sha256(nw);
+    if(rec.row)await dbUpd('app_settings',rec.row.id,{value:h});
+    else await dbIns('app_settings',{key:'admin_pw_hash',value:h});
+    ['apw-current','apw-new','apw-confirm'].forEach(i=>document.getElementById(i).value='');
+    show(he?'✓ הסיסמה שונתה בהצלחה':'✓ Password changed successfully',true);
+    toast(he?'✓ סיסמת המנהל עודכנה':'✓ Admin password updated');
+  }catch(e){
+    const noTable=/app_settings|PGRST205|42P01|does not exist/i.test(e.message);
+    show(noTable?(he?'טבלת app_settings לא קיימת ב-Supabase. יש להריץ את קוד ה-SQL להגדרה.':'The app_settings table does not exist in Supabase yet. Run the setup SQL first.'):(T[lang].errorPrefix+e.message));
+  }
+}
 const DEFAULT_PIN='1234';
 const DEFAULT_NEEDED={ZVULUN:2,LIN:1,TAMRA:2,KFARYASSIF:1};
 const SITES=['ZVULUN','LIN','TAMRA','KFARYASSIF'];
@@ -1136,8 +1189,10 @@ function showPanel(name,btn){
   if(btn)btn.classList.add('active');
   if(name==='admin')renderAdmin();
 }
-function checkPw(){
-  if(document.getElementById('pw-input').value===ADMIN_PW){adminOk=true;document.getElementById('pw-screen').style.display='none';showPanel('admin',pendBtn);}
+async function checkPw(){
+  let ok=false;
+  try{ok=await verifyAdminPw(document.getElementById('pw-input').value);}catch(e){toast(T[lang].errorPrefix+e.message);return;}
+  if(ok){adminOk=true;document.getElementById('pw-screen').style.display='none';showPanel('admin',pendBtn);}
   else{document.getElementById('pw-error').style.display='block';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
 }
 function cancelAdmin(){document.getElementById('pw-screen').style.display='none';document.querySelectorAll('.view-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));}
@@ -1151,7 +1206,7 @@ function showDocTab(name){
   if(name==='myreport')renderMyReport();
 }
 function showAdminTab(name){
-  ['req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links'].forEach(t=>{
+  ['req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','password'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'':'none';
     const b=document.getElementById('itab-'+t);if(b)b.classList.toggle('active',t===name);
   });
@@ -1163,6 +1218,7 @@ function showAdminTab(name){
   if(name==='rules')renderRules();
   if(name==='holidays')renderHolidays();
   if(name==='doctors')renderDoctors();
+  if(name==='password'){['apw-current','apw-new','apw-confirm'].forEach(i=>document.getElementById(i).value='');document.getElementById('apw-msg').style.display='none';}
   if(name==='links')renderLinks();
 }
 
