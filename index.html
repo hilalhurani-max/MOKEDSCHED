@@ -1161,6 +1161,13 @@ const specBadge=s=>`<span class="badge badge-${s}">${specLbl(s)}</span>`;
 const stBadge=s=>`<span class="badge badge-${s.replace(/ /g,'_')}">${T[lang].statuses[s]||s}</span>`;
 const siteBadge=s=>`<span class="tag-${s.toLowerCase()}">${s}</span>`;
 const shiftBadge=t=>t?`<span class="tag-${t}">${t==='morning'?'🌅 '+T[lang].shifts.morning:'🌙 '+T[lang].shifts.evening}</span>`:'';
+// Short display name for tight grids: drop "Dr." / ד"ר, use first word unless another doctor shares it
+function shortName(n){
+  const clean=x=>x.replace(/^\s*(Dr\.?|ד"ר|ד״ר)\s+/i,'').trim();
+  const c=clean(n);const first=c.split(' ')[0];
+  const clash=getAllDocs().some(d=>d.name!==n&&clean(d.name).split(' ')[0]===first);
+  return clash?c:first;
+}
 function isSpecial(ds){const dow=new Date(ds+'T12:00:00').getDay();return dow===5||dow===6||holidays.some(h=>h.date===ds);}
 function holName(ds){const h=holidays.find(h=>h.date===ds);return h?h.name:null;}
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -1257,7 +1264,7 @@ function loginStep1Next(){
   const sp=document.getElementById('login-specialty').value,name=document.getElementById('login-name').value;
   if(!sp||!name){toast(lang==='he'?'נא לבחור התמחות ושם':'Please select specialty and name');return;}
   loginSelectedSpec=sp;loginSelectedName=name;
-  document.getElementById('login-greeting').textContent=(lang==='he'?'שלום, ':'Hello, ')+name.replace('Dr.','')+' 👋';
+  document.getElementById('login-greeting').textContent=(lang==='he'?'שלום, ':'Hello, ')+name.replace(/^\s*Dr\.?\s*/i,'')+' 👋';
   document.getElementById('login-step1').style.display='none';
   document.getElementById('login-step2').style.display='flex';
   pinBuffer='';updatePinDisplay();document.getElementById('pin-error').textContent='';
@@ -1273,7 +1280,7 @@ function checkPin(){
     document.getElementById('doc-bar-name').textContent=curDoc;
     document.getElementById('doc-bar-info').textContent=specLbl(curSpec)+' · '+(lang==='he'?'מחובר':'Logged in');
     renderCal();renderMyReqs();renderExchangeTab();updateExchangeNotif();
-    toast((lang==='he'?'ברוך הבא ':'Welcome ')+curDoc.replace('Dr.','')+' ✓');
+    toast((lang==='he'?'ברוך הבא ':'Welcome ')+curDoc.replace(/^\s*Dr\.?\s*/i,'')+' ✓');
   }else{document.getElementById('pin-error').textContent='❌ '+T[lang].pinWrong;pinBuffer='';updatePinDisplay();}
 }
 function logoutDoctor(){
@@ -1667,7 +1674,7 @@ function buildFinalHTML(y,m){
           const n=getNeeded(ds,site,sp,st);
           const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type===st);
           let cell=`<div style="font-size:9px;color:var(--text3);margin-bottom:1px">${st==='morning'?'🌅':'🌙'}(${n})</div>`;
-          appr.forEach(r=>{const isMe=r.doctor===curDoc;const sn=r.doctor.replace('Dr. ','').split(' ')[0];const ga=swaps.find(s=>s.type==='giveaway'&&s.requester_req_id===r.id&&s.status==='giveaway');if(ga)cell+=`<span class="fs-slot-giveaway">${sn}🎁</span>`;else cell+=`<span class="fs-slot-${site[0].toLowerCase()}${isMe?' fs-slot-mine':''}">${isMe?'★'+sn:sn}</span>`;});
+          appr.forEach(r=>{const isMe=r.doctor===curDoc;const sn=shortName(r.doctor);const ga=swaps.find(s=>s.type==='giveaway'&&s.requester_req_id===r.id&&s.status==='giveaway');if(ga)cell+=`<span class="fs-slot-giveaway">${sn}🎁</span>`;else cell+=`<span class="fs-slot-${site[0].toLowerCase()}${isMe?' fs-slot-mine':''}">${isMe?'★'+sn:sn}</span>`;});
           for(let i=appr.length;i<n;i++)cell+=`<span class="fs-slot-empty" onclick="openVolunteer('${ds}','${site}','${sp}','${st}')">+</span>`;
           html+=`<td>${cell}</td>`;
         });});html+='</tr>';
@@ -1678,7 +1685,7 @@ function buildFinalHTML(y,m){
         const n=getNeeded(ds,site,sp,null);
         const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&!r.shift_type);
         let cell='';
-        appr.forEach(r=>{const isMe=r.doctor===curDoc;const sn=r.doctor.replace('Dr. ','').split(' ')[0];const ga=swaps.find(s=>s.type==='giveaway'&&s.requester_req_id===r.id&&s.status==='giveaway');if(ga)cell+=`<span class="fs-slot-giveaway">${sn}🎁</span>`;else cell+=`<span class="fs-slot-${site[0].toLowerCase()}${isMe?' fs-slot-mine':''}">${isMe?'★'+sn:sn}</span>`;});
+        appr.forEach(r=>{const isMe=r.doctor===curDoc;const sn=shortName(r.doctor);const ga=swaps.find(s=>s.type==='giveaway'&&s.requester_req_id===r.id&&s.status==='giveaway');if(ga)cell+=`<span class="fs-slot-giveaway">${sn}🎁</span>`;else cell+=`<span class="fs-slot-${site[0].toLowerCase()}${isMe?' fs-slot-mine':''}">${isMe?'★'+sn:sn}</span>`;});
         for(let i=appr.length;i<n;i++)cell+=`<span class="fs-slot-empty" onclick="openVolunteer('${ds}','${site}','${sp}',null)">+</span>`;
         html+=`<td>${cell}</td>`;
       });});html+='</tr>';
@@ -2304,7 +2311,7 @@ function renderSchedule(){
           const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&r.shift_type===st);
           let cell=`<div style="font-size:9px;color:var(--text3)">${st==='morning'?'🌅':'🌙'}(${n}) ${extraTag(ds,site,sp,st)}</div>`;
           if(!appr.length)cell+=`<span class="slot-empty">—</span>`;
-          else{appr.slice(0,n).forEach(r=>{const sn=r.doctor.replace('Dr. ','').split(' ')[0];cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
+          else{appr.slice(0,n).forEach(r=>{const sn=shortName(r.doctor);cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
           h+=`<td>${cell}</td>`;
         });});h+='</tr>';
       });
@@ -2315,7 +2322,7 @@ function renderSchedule(){
         const appr=reqs.filter(r=>r.date===ds&&r.site===site&&r.specialty===sp&&r.status==='approved'&&!r.shift_type);
         let cell=getExtra(ds,site,sp,null)?`<div>${extraTag(ds,site,sp,null)}</div>`:'';
         if(!appr.length)cell+=`<span class="slot-empty">—</span>`;
-        else{appr.slice(0,n).forEach(r=>{const sn=r.doctor.replace('Dr. ','').split(' ')[0];cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
+        else{appr.slice(0,n).forEach(r=>{const sn=shortName(r.doctor);cell+=`<span class="slot-${site[0].toLowerCase()}" onclick="openMoveModal(${r.id})">${sn}</span>`;});for(let i=appr.length;i<n;i++)cell+=`<span class="slot-empty">+</span>`;}
         h+=`<td>${cell}</td>`;
       });});h+='</tr>';
     }
@@ -2544,17 +2551,59 @@ function renderDoctors(){
   document.getElementById('doctor-cols').innerHTML=['ortho','pedia','internal'].map(sp=>`
     <div class="spec-col">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">${specBadge(sp)}<span style="color:var(--text3);font-size:11px">(${(DOCS[sp]||[]).length})</span></div>
-      <div>${(DOCS[sp]||[]).map((d,i)=>`<div class="doctor-item"><span class="doc-name">${d.name}</span>
-        <span class="pin-badge" onclick="adminResetPin(${d.id},'${d.name}')">${T[lang].pinLabel}: ${d.pin||DEFAULT_PIN}</span>
+      <div>${(DOCS[sp]||[]).map((d,i)=>`<div class="doctor-item"><span class="doc-name">${escHtml(d.name)}</span>
+        <button class="btn btn-ghost btn-sm" title="${lang==='he'?'ערוך שם':'Edit name'}" onclick="renameDoc(${d.id})">✏️</button>
+        <span class="pin-badge" onclick="adminResetPin(${d.id})">${T[lang].pinLabel}: ${d.pin||DEFAULT_PIN}</span>
         <button class="btn btn-danger btn-sm" onclick="removeDoc(${d.id},'${sp}')">${T[lang].removeLabel}</button></div>`).join('')}</div>
       <div class="add-row">
-        <input type="text" id="nd-${sp}" placeholder="Dr. Name" style="min-width:90px">
+        <input type="text" id="nd-${sp}" placeholder="${lang==='he'?'שם הרופא':'Doctor name'}" style="min-width:90px">
         <input type="text" id="np-${sp}" placeholder="${T[lang].pinLabel}" maxlength="4" style="width:52px;text-align:center">
         <button class="btn btn-primary btn-sm" onclick="addDoc('${sp}')">+</button>
       </div>
-    </div>`).join('');
+    </div>`).join('')+(getAllDocs().some(d=>/^\s*Dr\.?\s/i.test(d.name))?`<div style="grid-column:1/-1;margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="stripDrPrefixAll()">✂️ ${lang==='he'?'הסר "Dr." מכל השמות':'Remove "Dr." from all names'}</button></div>`:'');
 }
-async function adminResetPin(id,name){
+const escHtml=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Update rows matching a column value (e.g. all requests of one doctor)
+async function dbUpdWhere(t,col,val,patch){const r=await fetch(api(t,`${col}=eq.${encodeURIComponent(val)}`),{method:'PATCH',headers:H,body:JSON.stringify(patch)});if(!r.ok)throw new Error(await r.text());return r.json();}
+// Rename a doctor everywhere: doctors table + their requests + swaps (names are stored as text there)
+async function applyDocRename(d,newName){
+  const old=d.name;
+  await dbUpd('doctors',d.id,{name:newName});
+  await dbUpdWhere('requests','doctor',old,{doctor:newName});
+  try{await dbUpdWhere('swaps','requester',old,{requester:newName});await dbUpdWhere('swaps','target_doctor',old,{target_doctor:newName});}catch(e){}
+  d.name=newName;
+  reqs.forEach(r=>{if(r.doctor===old)r.doctor=newName;});
+  swaps.forEach(s=>{if(s.requester===old)s.requester=newName;if(s.target_doctor===old)s.target_doctor=newName;});
+  if(curDoc===old){curDoc=newName;const el=document.getElementById('doc-bar-name');if(el)el.textContent=newName;}
+}
+async function renameDoc(id){
+  const he=lang==='he';const d=getAllDocs().find(x=>x.id===id);if(!d)return;
+  const input=prompt(he?'שם חדש לרופא:':'New name for this doctor:',d.name);
+  if(input===null)return;const nn=input.trim().replace(/\s+/g,' ');
+  if(!nn||nn===d.name)return;
+  if(getAllDocs().some(x=>x.id!==id&&x.name.toLowerCase()===nn.toLowerCase())){toast(he?'כבר קיים רופא בשם הזה':'A doctor with this name already exists');return;}
+  sync(true);
+  try{await applyDocRename(d,nn);renderDoctors();populateDoctorFilter();renderAdmin();toast(he?`✓ השם עודכן: ${nn}`:`✓ Renamed to ${nn}`);}
+  catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
+}
+async function stripDrPrefixAll(){
+  const he=lang==='he';
+  const list=getAllDocs().filter(d=>/^\s*Dr\.?\s/i.test(d.name));
+  if(!list.length)return;
+  if(!confirm(he?`להסיר "Dr." מ-${list.length} שמות? השיבוצים והבקשות יתעדכנו בהתאם.`:`Remove "Dr." from ${list.length} names? Their shifts and requests will be updated too.`))return;
+  showLoad(true,he?'מעדכן שמות...':'Updating names...');let done=0,skipped=0;
+  try{
+    for(const d of list){
+      const nn=d.name.replace(/^\s*Dr\.?\s+/i,'').trim();
+      if(!nn||getAllDocs().some(x=>x.id!==d.id&&x.name.toLowerCase()===nn.toLowerCase())){skipped++;continue;}
+      await applyDocRename(d,nn);done++;
+    }
+    renderDoctors();populateDoctorFilter();renderAdmin();
+    toast(he?`✓ עודכנו ${done} שמות${skipped?` · ${skipped} דולגו (שם כפול)`:''}`:`✓ Updated ${done} names${skipped?` · ${skipped} skipped (duplicate name)`:''}`,4000);
+  }catch(e){toast(T[lang].errorPrefix+e.message);}finally{showLoad(false);}
+}
+async function adminResetPin(id){
+  const name=(getAllDocs().find(d=>d.id===id)||{}).name||'';
   const newPin=prompt(`${T[lang].pinReset}${name}\n${lang==='he'?'הזן קוד 4 ספרות (ריק = 1234)':'Enter 4-digit PIN (blank = 1234)'}:`,'');
   if(newPin===null)return;const pin=newPin.trim()||DEFAULT_PIN;
   if(!/^\d{4}$/.test(pin)){toast(T[lang].pin4digits);return;}
@@ -2563,7 +2612,8 @@ async function adminResetPin(id,name){
 async function addDoc(sp){
   const nameInp=document.getElementById('nd-'+sp),pinInp=document.getElementById('np-'+sp);
   const name=nameInp.value.trim(),pin=pinInp.value.trim()||DEFAULT_PIN;
-  if(!name)return;if(!name.startsWith('Dr.')){toast(lang==='he'?'שם חייב להתחיל ב-Dr.':'Name must start with Dr.');return;}
+  if(!name)return;
+  if(getAllDocs().some(x=>x.name.toLowerCase()===name.toLowerCase())){toast(lang==='he'?'כבר קיים רופא בשם הזה':'A doctor with this name already exists');return;}
   if(!/^\d{4}$/.test(pin)){toast(T[lang].pin4digits);return;}
   try{const ins=await dbIns('doctors',{name,specialty:sp,pin});if(!DOCS[sp])DOCS[sp]=[];DOCS[sp].push(ins[0]);nameInp.value='';pinInp.value='';renderDoctors();populateDoctorFilter();toast(T[lang].doctorAdded);}catch(e){toast(T[lang].errorPrefix+e.message);}
 }
