@@ -528,6 +528,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
             <div class="card-title" style="margin-bottom:0">📥 <span class="t" data-he="הודעות מרופאים" data-en="Messages from doctors">הודעות מרופאים</span></div>
             <select id="inbox-filter" onchange="renderInbox()" style="margin-inline-start:auto;font-size:12px"></select>
+            <button class="btn btn-ghost btn-sm" onclick="deleteReadThreads()">🧹 <span class="t" data-he="מחק שיחות שנקראו" data-en="Delete read conversations">מחק שיחות שנקראו</span></button>
           </div>
           <div id="inbox-list"></div>
         </div>
@@ -1915,6 +1916,9 @@ function exportReportCSV(){
 let msgs=[],msgTableOk=true,openThreadId=null,roleActive={ortho:false,pedia:false,internal:false};
 const NO_MSG_TABLE_RE=/messages|PGRST205|42P01|does not exist/i;
 async function dbInsMany(t,rows){if(!rows.length)return[];const r=await fetch(api(t),{method:'POST',headers:H,body:JSON.stringify(rows)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function dbDelQuery(t,q){const r=await fetch(api(t,q),{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text());}
+const NO_HIDE_COL_RE=/hidden_(doctor|mgmt)|PGRST204|column/i;
+const sideKey=viewer=>viewer==='doctor'?'hidden_doctor':'hidden_mgmt';
 async function dbUpdIds(t,ids,patch){if(!ids.length)return;const r=await fetch(api(t,`id=in.(${ids.join(',')})`),{method:'PATCH',headers:H,body:JSON.stringify(patch)});if(!r.ok)throw new Error(await r.text());}
 // Fire-and-forget: a notification must never block or break the action that triggered it
 async function sendNotifs(list){
@@ -1948,8 +1952,9 @@ const threadDoctor=root=>root.from_role==='doctor'?root.from_doctor:root.to_doct
 const threadMgmt=root=>root.from_role==='doctor'?root.to_role:root.from_role;
 const myMgmtRole=()=>adminRole==='admin'?'admin':scopeSpec();
 // Unread counts
-function doctorUnread(){return curDoc?msgs.filter(m=>m.to_role==='doctor'&&m.to_doctor===curDoc&&!m.is_read).length:0;}
-function inboxUnread(){const r=myMgmtRole();return r?msgs.filter(m=>m.kind==='msg'&&m.to_role===r&&!m.is_read).length:0;}
+const rootOf=m=>m.thread_id?(msgs.find(x=>x.id===m.thread_id)||m):m;
+function doctorUnread(){return curDoc?msgs.filter(m=>m.to_role==='doctor'&&m.to_doctor===curDoc&&!m.is_read&&!(m.kind==='msg'&&rootOf(m).hidden_doctor)).length:0;}
+function inboxUnread(){const r=myMgmtRole();return r?msgs.filter(m=>m.kind==='msg'&&m.to_role===r&&!m.is_read&&!rootOf(m).hidden_mgmt).length:0;}
 function setBadge(el,n){if(!el)return;const ex=el.querySelector('.notif-badge');if(ex)ex.remove();if(n>0){const b=document.createElement('span');b.className='notif-badge';b.textContent=n>99?'99+':n;el.appendChild(b);}}
 function updateMsgBadges(){const n=doctorUnread();setBadge(document.getElementById('doc-bell'),n);setBadge(document.getElementById('ditab-messages'),n);setBadge(document.getElementById('itab-inbox'),inboxUnread());}
 async function markRead(ids){ids=ids.filter(Boolean);if(!ids.length)return;msgs.forEach(m=>{if(ids.includes(m.id))m.is_read=true;});updateMsgBadges();try{await dbUpdIds('messages',ids,{is_read:true});}catch(e){console.warn(e);}}
@@ -1996,7 +2001,8 @@ function threadHtml(root,viewer){
   let h=`<div class="thread${unread?' unread':''}"><div class="thread-head" onclick="toggleThread(${root.id},'${viewer}')">
     <strong style="font-size:13px">${who}</strong> <span class="cat-pill">${catLabel(root.category)}</span>
     <span style="font-size:12px;color:var(--text2);flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(last.body).slice(0,90)}</span>
-    <span style="font-size:11px;color:var(--text3)">${fmtMsgTime(last.created_at)} · ${list.length} ${open?'▴':'▾'}</span>${unread?'<span class="notif-badge">●</span>':''}</div>`;
+    <span style="font-size:11px;color:var(--text3)">${fmtMsgTime(last.created_at)} · ${list.length} ${open?'▴':'▾'}</span>${unread?'<span class="notif-badge">●</span>':''}
+    <button class="btn btn-ghost btn-sm" title="${he?'מחק שיחה':'Delete conversation'}" onclick="event.stopPropagation();deleteThread(${root.id},'${viewer}')">🗑️</button></div>`;
   if(open){
     h+=`<div class="thread-body">`+list.map(m=>`<div class="bubble ${mine(m)?'me':'them'}">${escHtml(m.body)}<div class="bt">${m.from_role==='doctor'?escHtml(m.from_doctor):mgmtLabel(m.from_role)} · ${fmtMsgTime(m.created_at)}${mine(m)&&m.is_read?' · ✓✓':''}</div></div>`).join('')+
       `<textarea id="reply-${root.id}" maxlength="2000" placeholder="${he?'תשובה...':'Reply...'}"></textarea>
@@ -2015,21 +2021,67 @@ async function sendReply(rootId,viewer){
   const doc=threadDoctor(root),mg=threadMgmt(root);
   const row=viewer==='doctor'?{kind:'msg',from_role:'doctor',from_doctor:doc,to_role:mg,specialty:root.specialty,category:root.category,body,thread_id:rootId,is_read:false}
                             :{kind:'msg',from_role:viewer,to_role:'doctor',to_doctor:doc,specialty:root.specialty,category:root.category,body,thread_id:rootId,is_read:false};
-  try{const ins=await dbIns('messages',row);msgs.push(ins[0]);ta.value='';if(viewer==='doctor')renderDoctorMessages(false);else renderInbox();toast(he?'✓ נשלח':'✓ Sent');}
+  try{const ins=await dbIns('messages',row);msgs.push(ins[0]);ta.value='';
+    if(root.hidden_doctor||root.hidden_mgmt){try{await dbUpd('messages',root.id,{hidden_doctor:false,hidden_mgmt:false});root.hidden_doctor=false;root.hidden_mgmt=false;}catch(e){}}
+    if(viewer==='doctor')renderDoctorMessages(false);else renderInbox();toast(he?'✓ נשלח':'✓ Sent');}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+// Delete a conversation for this side only. If the other side already deleted it too, it is removed from the database.
+async function deleteThread(rootId,viewer){
+  const he=lang==='he';const root=msgs.find(m=>m.id===rootId);if(!root)return;
+  if(!confirm(he?'למחוק את השיחה? (הצד השני ימשיך לראות אותה עד שימחק גם הוא)':'Delete this conversation? (The other side keeps it until they delete it too)'))return;
+  const mine=sideKey(viewer),other=mine==='hidden_doctor'?'hidden_mgmt':'hidden_doctor';
+  try{
+    if(root[other]){
+      await dbDelQuery('messages',`thread_id=eq.${rootId}`);await dbDelQuery('messages',`id=eq.${rootId}`);
+      msgs=msgs.filter(m=>m.id!==rootId&&m.thread_id!==rootId);
+    }else{
+      await dbUpd('messages',rootId,{[mine]:true});root[mine]=true;
+      const unreadMine=threadMsgs(root).filter(m=>!m.is_read&&(viewer==='doctor'?(m.to_role==='doctor'&&m.to_doctor===curDoc):m.to_role===viewer)).map(m=>m.id);
+      if(unreadMine.length)markRead(unreadMine);
+    }
+    if(openThreadId===rootId)openThreadId=null;
+    if(viewer==='doctor')renderDoctorMessages(false);else renderInbox();
+    toast(he?'🗑️ השיחה נמחקה':'🗑️ Conversation deleted');
+  }catch(e){toast(NO_HIDE_COL_RE.test(e.message)?(he?'יש להריץ את קוד ה-SQL החדש (עמודות מחיקה) ב-Supabase':'Run the new SQL (delete columns) in Supabase first'):T[lang].errorPrefix+e.message);}
+}
+// Inbox clean-up: delete every conversation with nothing unread (for this role only)
+async function deleteReadThreads(){
+  const he=lang==='he';const role=myMgmtRole();if(!role)return;
+  const roots=msgs.filter(m=>m.kind==='msg'&&!m.thread_id&&threadMgmt(m)===role&&!m.hidden_mgmt&&(m.from_role==='doctor'||threadMsgs(m).length>1)&&!threadMsgs(m).some(x=>!x.is_read&&x.to_role===role));
+  if(!roots.length){toast(he?'אין שיחות שנקראו למחיקה':'No read conversations to delete');return;}
+  if(!confirm(he?`למחוק ${roots.length} שיחות שנקראו? (הרופאים ימשיכו לראות אותן)`:`Delete ${roots.length} read conversations? (Doctors keep their copy)`))return;
+  try{
+    for(const r of roots){
+      if(r.hidden_doctor){await dbDelQuery('messages',`thread_id=eq.${r.id}`);await dbDelQuery('messages',`id=eq.${r.id}`);msgs=msgs.filter(m=>m.id!==r.id&&m.thread_id!==r.id);}
+      else{await dbUpd('messages',r.id,{hidden_mgmt:true});r.hidden_mgmt=true;}
+    }
+    openThreadId=null;renderInbox();toast(he?`🗑️ נמחקו ${roots.length} שיחות`:`🗑️ Deleted ${roots.length} conversations`);
+  }catch(e){toast(NO_HIDE_COL_RE.test(e.message)?(he?'יש להריץ את קוד ה-SQL החדש (עמודות מחיקה) ב-Supabase':'Run the new SQL (delete columns) in Supabase first'):T[lang].errorPrefix+e.message);}
+}
+async function deleteNotif(id){
+  try{await dbDelQuery('messages',`id=eq.${id}`);msgs=msgs.filter(m=>m.id!==id);renderDoctorMessages(false);}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+async function clearAllNotifs(){
+  const he=lang==='he';if(!curDoc)return;
+  const ids=msgs.filter(m=>m.kind==='notif'&&m.to_doctor===curDoc).map(m=>m.id);if(!ids.length)return;
+  if(!confirm(he?`למחוק את כל ${ids.length} ההתראות?`:`Delete all ${ids.length} notifications?`))return;
+  try{for(let i=0;i<ids.length;i+=100)await dbDelQuery('messages',`id=in.(${ids.slice(i,i+100).join(',')})`);msgs=msgs.filter(m=>!ids.includes(m.id));renderDoctorMessages(false);toast(he?'🗑️ ההתראות נמחקו':'🗑️ Notifications cleared');}
   catch(e){toast(T[lang].errorPrefix+e.message);}
 }
 function renderDoctorMessages(markNotifsRead){
   const he=lang==='he';if(!curDoc)return;
   // Conversations
   keepTyping('dm-threads',()=>{
-    const roots=msgs.filter(m=>m.kind==='msg'&&!m.thread_id&&threadDoctor(m)===curDoc);
+    const roots=msgs.filter(m=>m.kind==='msg'&&!m.thread_id&&threadDoctor(m)===curDoc&&!m.hidden_doctor);
     const lastT=r=>{const l=threadMsgs(r);return String(l[l.length-1].created_at);};
     roots.sort((a,b)=>lastT(b).localeCompare(lastT(a)));
     document.getElementById('dm-threads').innerHTML=msgSetupWarning()+(roots.length?roots.map(r=>threadHtml(r,'doctor')).join(''):`<div class="empty-state" style="padding:14px"><div class="icon">💬</div>${he?'עדיין אין שיחות. אפשר לשלוח הודעה למעלה.':'No conversations yet. Send a message above.'}</div>`);
   });
   // Notifications
   const nots=msgs.filter(m=>m.kind==='notif'&&m.to_doctor===curDoc).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))||b.id-a.id).slice(0,40);
-  document.getElementById('dm-notifs').innerHTML=nots.length?`<div class="msg-list">${nots.map(m=>`<div class="msg-item${m.is_read?'':' unread'}"><div class="msg-meta">${fmtMsgTime(m.created_at)}${m.is_read?'':` · <strong style="color:var(--accent)">${he?'חדש':'New'}</strong>`}</div><div class="msg-body">${escHtml(notifText(m))}</div></div>`).join('')}</div>`
+  document.getElementById('dm-notifs').innerHTML=nots.length?`<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn btn-ghost btn-sm" onclick="clearAllNotifs()">🧹 ${he?'נקה הכל':'Clear all'}</button></div><div class="msg-list">${nots.map(m=>`<div class="msg-item${m.is_read?'':' unread'}"><div class="msg-meta">${fmtMsgTime(m.created_at)}${m.is_read?'':` · <strong style="color:var(--accent)">${he?'חדש':'New'}</strong>`}<button class="btn btn-ghost btn-sm" style="margin-inline-start:auto;padding:1px 6px" title="${he?'מחק':'Delete'}" onclick="deleteNotif(${m.id})">🗑️</button></div><div class="msg-body">${escHtml(notifText(m))}</div></div>`).join('')}</div>`
     :`<div class="empty-state" style="padding:14px"><div class="icon">🔔</div>${he?'אין התראות':'No notifications'}</div>`;
   // Opening the tab marks notifications as read (they stay highlighted until the next refresh)
   if(markNotifsRead)markRead(nots.filter(m=>!m.is_read).map(m=>m.id));
@@ -2043,7 +2095,7 @@ function renderInbox(){
   f.innerHTML=`<option value="all">${he?'הכל':'All'}</option><option value="unread">${he?'לא נקראו':'Unread'}</option>`+MSG_CATS.map(c=>`<option value="${c}">${catLabel(c)}</option>`).join('');f.value=fv;
   keepTyping('inbox-list',()=>{
     // Announcements sent to many doctors only appear here once a doctor replies
-    let roots=msgs.filter(m=>m.kind==='msg'&&!m.thread_id&&threadMgmt(m)===role&&(m.from_role==='doctor'||threadMsgs(m).length>1));
+    let roots=msgs.filter(m=>m.kind==='msg'&&!m.thread_id&&threadMgmt(m)===role&&!m.hidden_mgmt&&(m.from_role==='doctor'||threadMsgs(m).length>1));
     if(fv==='unread')roots=roots.filter(r=>threadMsgs(r).some(m=>!m.is_read&&m.to_role===role));
     else if(fv!=='all')roots=roots.filter(r=>r.category===fv);
     const lastT=r=>{const l=threadMsgs(r);return String(l[l.length-1].created_at);};
