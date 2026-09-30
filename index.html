@@ -202,6 +202,25 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
 .publish-dot{width:10px;height:10px;border-radius:50%;background:var(--success);display:inline-block}
 .publish-dot.off{background:var(--text3)}
 
+/* ── MESSAGES / NOTIFICATIONS ── */
+.bell-btn{position:relative}
+.thread-head .notif-badge,.bell-btn .notif-badge,.ditab .notif-badge,.itab .notif-badge{position:static;margin-inline-start:4px}
+.msg-list{display:flex;flex-direction:column;gap:6px}
+.msg-item{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;background:var(--surface)}
+.msg-item.unread{border-color:var(--accent);background:var(--accent-light)}
+.msg-meta{font-size:11px;color:var(--text3);margin-bottom:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.msg-body{white-space:pre-wrap;word-break:break-word;line-height:1.45}
+.thread{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+.thread-head{display:flex;gap:8px;align-items:center;padding:9px 11px;cursor:pointer;background:var(--surface);flex-wrap:wrap}
+.thread-head:hover{background:var(--surface2)}
+.thread.unread .thread-head{background:var(--accent-light)}
+.thread-body{padding:10px 11px;border-top:1px solid var(--border);background:var(--surface2);display:flex;flex-direction:column;gap:8px}
+.bubble{max-width:88%;padding:7px 10px;border-radius:10px;font-size:13px;white-space:pre-wrap;word-break:break-word;line-height:1.45}
+.bubble.me{align-self:flex-end;background:var(--accent-light);border:1px solid var(--accent)}
+.bubble.them{align-self:flex-start;background:var(--surface);border:1px solid var(--border)}
+.bubble .bt{font-size:10px;color:var(--text3);margin-top:3px}
+.cat-pill{font-size:10px;border-radius:10px;padding:1px 7px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.msg-compose textarea,.thread-body textarea{width:100%;min-height:70px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);resize:vertical;box-sizing:border-box}
 /* ── ROLES / TODAY ── */
 .role-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-size:13px}
 .role-bar:empty{display:none}
@@ -382,6 +401,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
           <div style="font-size:12px;color:var(--text2)" id="doc-bar-info">—</div>
         </div>
         <div class="doc-bar-btns">
+          <button class="btn btn-ghost btn-sm bell-btn" id="doc-bell" onclick="showDocTab('messages')" title="Notifications">🔔</button>
           <button class="btn btn-ghost btn-sm" onclick="openChangePinModal()">🔑 <span class="t" data-he="שנה קוד" data-en="Change PIN">שנה קוד</span></button>
           <button class="btn btn-ghost btn-sm" onclick="logoutDoctor()"><span class="t" data-he="יציאה" data-en="Log out">יציאה</span></button>
         </div>
@@ -391,6 +411,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
         <button class="ditab" id="ditab-finalschedule" onclick="showDocTab('finalschedule')">📅 <span class="t" data-he="לוח סופי" data-en="Final Schedule">לוח סופי</span></button>
         <button class="ditab" id="ditab-exchange" onclick="showDocTab('exchange')">🔄 <span class="t" data-he="זמין &amp; החלפות" data-en="Available &amp; Swaps">זמין &amp; החלפות</span></button>
         <button class="ditab" id="ditab-myreport" onclick="showDocTab('myreport')">📊 <span class="t" data-he="הדוח שלי" data-en="My Report">הדוח שלי</span></button>
+        <button class="ditab" id="ditab-messages" onclick="showDocTab('messages')">✉️ <span class="t" data-he="הודעות" data-en="Messages">הודעות</span></button>
       </div>
 
       <!-- MY SHIFTS -->
@@ -423,6 +444,26 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
 
       <!-- MY MONTHLY REPORT (doctor sees only their own) -->
       <div id="dtab-myreport" style="display:none"><div id="my-report-container"></div></div>
+
+      <!-- MESSAGES & NOTIFICATIONS (doctor) -->
+      <div id="dtab-messages" style="display:none">
+        <div class="card msg-compose">
+          <div class="card-title">✉️ <span class="t" data-he="הודעה חדשה" data-en="New message">הודעה חדשה</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            <select id="dm-to" style="flex:1;min-width:170px"></select>
+            <select id="dm-cat" style="flex:1;min-width:130px"></select>
+          </div>
+          <textarea id="dm-body" maxlength="2000"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="sendDoctorMessage()">📤 <span class="t" data-he="שלח" data-en="Send">שלח</span></button></div>
+        </div>
+        <div class="card"><div class="card-title">💬 <span class="t" data-he="השיחות שלי" data-en="My conversations">השיחות שלי</span></div><div id="dm-threads"></div></div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div class="card-title" style="margin-bottom:0">🔔 <span class="t" data-he="התראות" data-en="Notifications">התראות</span></div>
+          </div>
+          <div id="dm-notifs"></div>
+        </div>
+      </div>
 
       <!-- AVAILABLE & SWAPS -->
       <div id="dtab-exchange" style="display:none">
@@ -471,12 +512,33 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
           <button class="itab" id="itab-holidays" onclick="showAdminTab('holidays')"><span class="t" data-he="חגים" data-en="Holidays">חגים</span></button>
           <button class="itab" id="itab-doctors" onclick="showAdminTab('doctors')"><span class="t" data-he="רופאים" data-en="Doctors">רופאים</span></button>
           <button class="itab" id="itab-links" onclick="showAdminTab('links')"><span class="t" data-he="שתף" data-en="Share">שתף</span></button>
+          <button class="itab" id="itab-inbox" onclick="showAdminTab('inbox')">📥 <span class="t" data-he="הודעות" data-en="Inbox">הודעות</span></button>
           <button class="itab" id="itab-password" onclick="showAdminTab('password')">🔑 <span class="t" data-he="סיסמאות והרשאות" data-en="Passwords &amp; Access">סיסמאות והרשאות</span></button>
         </div>
         <div style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-warn btn-sm" id="btn-autosched" onclick="autoSchedule()">⚡ <span class="t" data-he="סידור אוטומטי" data-en="Auto-Schedule">סידור אוטומטי</span></button>
           <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ Excel</button>
           <button class="btn btn-ghost btn-sm" onclick="loadAll()">↺</button>
+        </div>
+      </div>
+
+      <!-- INBOX -->
+      <div id="tab-inbox" style="display:none">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <div class="card-title" style="margin-bottom:0">📥 <span class="t" data-he="הודעות מרופאים" data-en="Messages from doctors">הודעות מרופאים</span></div>
+            <select id="inbox-filter" onchange="renderInbox()" style="margin-inline-start:auto;font-size:12px"></select>
+          </div>
+          <div id="inbox-list"></div>
+        </div>
+        <div class="card msg-compose">
+          <div class="card-title">📣 <span class="t" data-he="שליחת הודעה לרופאים" data-en="Send a message to doctors">שליחת הודעה לרופאים</span></div>
+          <select id="am-to" style="width:100%;margin-bottom:8px"></select>
+          <textarea id="am-body" maxlength="2000"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--text3)" class="t" data-he="הרופאים יראו את ההודעה ב-🔔 ויוכלו להשיב." data-en="Doctors see it under 🔔 and can reply.">הרופאים יראו את ההודעה ב-🔔 ויוכלו להשיב.</span>
+            <button class="btn btn-primary btn-sm" onclick="sendAdminMessage()">📤 <span class="t" data-he="שלח" data-en="Send">שלח</span></button>
+          </div>
         </div>
       </div>
 
@@ -966,6 +1028,8 @@ function toggleLang(){
   applyLang();
   renderCal();renderMyReport();
   if(adminOk)applyRoleUI();
+  if(curDoc&&document.getElementById('dtab-messages').style.display!=='none'){populateDoctorMsgForm();renderDoctorMessages(false);}
+  if(adminOk&&document.getElementById('tab-inbox').style.display!=='none'){populateAdminMsgTo();renderInbox();}
   if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
   if(document.getElementById('panel-viewer').classList.contains('active'))showViewerTab(viewerTab);
 }
@@ -1124,8 +1188,8 @@ function roleLabel(r){const he=lang==='he';
   if(r==='secretary')return he?'מזכירות (צפייה בלבד)':'Secretary (view only)';
   return (he?'מנהל/ת ':'')+specLbl(r)+(he?'':' manager');}
 const ADMIN_TABS_BY_ROLE={
-  admin:['today','req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','password'],
-  manager:['today','req','sched','report','conflicts','exchange']
+  admin:['today','req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','inbox','password'],
+  manager:['today','req','sched','report','conflicts','exchange','inbox']
 };
 let cflList=[],cflIdx=null,moveId=null;
 let pinBuffer='';
@@ -1168,6 +1232,9 @@ function shortName(n){
   const clash=getAllDocs().some(d=>d.name!==n&&clean(d.name).split(' ')[0]===first);
   return clash?c:first;
 }
+// Doctors only see decisions (approved / rejected) once the month is published. Until then everything looks "pending" to them.
+const isPubDate=ds=>!!publishedMonths[String(ds).slice(0,7)];
+const docStatus=r=>(r.status!=='pending'&&!isPubDate(r.date))?'pending':r.status;
 function isSpecial(ds){const dow=new Date(ds+'T12:00:00').getDay();return dow===5||dow===6||holidays.some(h=>h.date===ds);}
 function holName(ds){const h=holidays.find(h=>h.date===ds);return h?h.name:null;}
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -1195,10 +1262,12 @@ async function loadAll(){
     try{holidays=await dbGet('holidays');}catch(e){holidays=[];}
     try{slotRules=await dbGet('slot_rules');}catch(e){slotRules=[];}
     try{publishedMonths=await loadPublished();}catch(e){publishedMonths={};}
-    try{const m=await loadSettingsMap();extraSlots={};Object.values(m).forEach(r=>{if(r.key.startsWith('extra|'))extraSlots[r.key]=r;});}catch(e){extraSlots={};}
+    try{const m=await loadSettingsMap();extraSlots={};Object.values(m).forEach(r=>{if(r.key.startsWith('extra|'))extraSlots[r.key]=r;});['ortho','pedia','internal'].forEach(sp=>roleActive[sp]=!!(m['pw_'+sp]&&m['pw_'+sp].value));}catch(e){extraSlots={};}
+    try{msgs=await dbGet('messages');msgTableOk=true;}catch(e){msgs=[];msgTableOk=!NO_MSG_TABLE_RE.test(e.message);}
     renderCal();renderMyReqs();renderExchangeTab();populateDoctorFilter();populateMonthFilters();updateExchangeNotif();renderFinalScheduleDoctor();renderMyReport();
     if(document.getElementById('panel-admin').classList.contains('active'))renderAdmin();
     if(document.getElementById('panel-viewer').classList.contains('active'))showViewerTab(viewerTab);
+    refreshMsgViews();
     if(document.getElementById('tab-today')&&document.getElementById('tab-today').style.display!=='none')renderToday('admin-today-container');
   }catch(e){toast(T[lang].errorPrefix+e.message);}
   finally{sync(false);}
@@ -1275,16 +1344,16 @@ function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updatePinDisplay();}
 function updatePinDisplay(){for(let i=0;i<4;i++)document.getElementById('pd'+i).className='pin-dot'+(i<pinBuffer.length?' filled':'');}
 function checkPin(){
   if(pinBuffer===getDocPin(loginSelectedName)){
-    curDoc=loginSelectedName;curSpec=loginSelectedSpec;
+    curDoc=loginSelectedName;curSpec=loginSelectedSpec;openThreadId=null;
     document.getElementById('login-screen').style.display='none';
     document.getElementById('doc-bar-name').textContent=curDoc;
     document.getElementById('doc-bar-info').textContent=specLbl(curSpec)+' · '+(lang==='he'?'מחובר':'Logged in');
-    renderCal();renderMyReqs();renderExchangeTab();updateExchangeNotif();
+    renderCal();renderMyReqs();renderExchangeTab();updateExchangeNotif();updateMsgBadges();
     toast((lang==='he'?'ברוך הבא ':'Welcome ')+curDoc.replace(/^\s*Dr\.?\s*/i,'')+' ✓');
   }else{document.getElementById('pin-error').textContent='❌ '+T[lang].pinWrong;pinBuffer='';updatePinDisplay();}
 }
 function logoutDoctor(){
-  curDoc=null;curSpec=null;pinBuffer='';myReportMonth='';
+  curDoc=null;curSpec=null;pinBuffer='';myReportMonth='';openThreadId=null;
   document.getElementById('login-specialty').value='';
   document.getElementById('login-name').innerHTML=`<option value="">${lang==='he'?'— בחר שם —':'— Select name —'}</option>`;
   document.getElementById('login-step1').style.display='flex';document.getElementById('login-step2').style.display='none';
@@ -1334,18 +1403,19 @@ function openStaffLogin(){
 }
 function cancelAdmin(){document.getElementById('pw-screen').style.display='none';if(!curDoc&&!adminOk)document.getElementById('login-screen').style.display='flex';document.querySelectorAll('.view-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));}
 function showDocTab(name){
-  ['myshifts','finalschedule','exchange','myreport'].forEach(t=>{
+  ['myshifts','finalschedule','exchange','myreport','messages'].forEach(t=>{
     document.getElementById('dtab-'+t).style.display=t===name?'':'none';
     const b=document.getElementById('ditab-'+t);if(b)b.classList.toggle('active',t===name);
   });
   if(name==='finalschedule')renderFinalScheduleDoctor();
   if(name==='exchange')renderExchangeTab();
   if(name==='myreport')renderMyReport();
+  if(name==='messages'){populateDoctorMsgForm();renderDoctorMessages(true);}
 }
 function showAdminTab(name){
   const allowed=adminRole==='admin'?ADMIN_TABS_BY_ROLE.admin:ADMIN_TABS_BY_ROLE.manager;
   if(!allowed.includes(name))name='req';
-  ['today','req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','password'].forEach(t=>{
+  ['today','req','sched','publish','report','conflicts','exchange','rules','holidays','doctors','links','inbox','password'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'':'none';
     const b=document.getElementById('itab-'+t);if(b)b.classList.toggle('active',t===name);
   });
@@ -1358,6 +1428,7 @@ function showAdminTab(name){
   if(name==='holidays')renderHolidays();
   if(name==='doctors')renderDoctors();
   if(name==='today')renderToday('admin-today-container');
+  if(name==='inbox'){populateAdminMsgTo();renderInbox();}
   if(name==='password'){renderRoleAccess();['apw-current','apw-new','apw-confirm'].forEach(i=>document.getElementById(i).value='');document.getElementById('apw-msg').style.display='none';}
   if(name==='links')renderLinks();
 }
@@ -1388,8 +1459,8 @@ function renderCal(){
     if(hn||dow===5||dow===6){const l=document.createElement('div');l.className='day-label';l.textContent=hn||(dow===5?L.friday:L.saturday);cell.appendChild(l);}
     const sl=document.createElement('div');sl.className='shifts-list';
     reqs.filter(r=>r.date===ds&&r.doctor===curDoc).forEach(r=>{
-      const ch=document.createElement('span');ch.className=`shift-chip chip-${r.status}`;
-      ch.textContent=`${r.site}${r.shift_type?' '+(r.shift_type==='morning'?'🌅':'🌙'):''} ${r.status==='approved'?'✓':r.status==='rejected'?'✗':'…'}`;
+      const vs=docStatus(r);const ch=document.createElement('span');ch.className=`shift-chip chip-${vs}`;
+      ch.textContent=`${r.site}${r.shift_type?' '+(r.shift_type==='morning'?'🌅':'🌙'):''} ${vs==='approved'?'✓':vs==='rejected'?'✗':'…'}`;
       sl.appendChild(ch);
     });
     cell.appendChild(sl);
@@ -1436,8 +1507,8 @@ async function submitRequest(){
 function renderMyReqs(){
   const wrap=document.getElementById('my-requests');
   const fMonth=document.getElementById('doc-f-month')?.value||'';
-  const mine=reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&(!fMonth||r.date.startsWith(fMonth))).sort((a,b)=>a.date.localeCompare(b.date));
-  const pending=reqs.filter(r=>r.doctor===curDoc&&r.status==='pending'&&(!fMonth||r.date.startsWith(fMonth))).sort((a,b)=>a.date.localeCompare(b.date));
+  const mine=reqs.filter(r=>r.doctor===curDoc&&docStatus(r)==='approved'&&(!fMonth||r.date.startsWith(fMonth))).sort((a,b)=>a.date.localeCompare(b.date));
+  const pending=reqs.filter(r=>r.doctor===curDoc&&docStatus(r)==='pending'&&(!fMonth||r.date.startsWith(fMonth))).sort((a,b)=>a.date.localeCompare(b.date));
   const L=T[lang];
   if(!mine.length&&!pending.length){wrap.innerHTML=`<div class="empty-state"><div class="icon">📋</div>${lang==='he'?'לחץ על יום בלוח לבקש משמרת':'Click a day on the calendar to request a shift'}</div>`;return;}
   let h='';
@@ -1466,14 +1537,22 @@ function renderMyReqs(){
       h+=`<tr><td style="font-family:'DM Mono',monospace;font-size:11px">${r.date}</td>
       <td>${siteBadge(r.site)}</td>
       <td>${r.shift_type?shiftBadge(r.shift_type):`<span style="color:var(--text3);font-size:11px">${L.shifts.regular}</span>`}</td>
-      <td>${stBadge(r.status)}</td>
+      <td>${stBadge(docStatus(r))}</td>
       <td><button class="btn btn-danger btn-sm" onclick="cancelReq(${r.id})">${L.cancel}</button></td></tr>`;
     });
     h+='</tbody></table>';
   }
   wrap.innerHTML=h;
 }
-async function cancelReq(id){try{await dbDel('requests',id);reqs=reqs.filter(r=>r.id!==id);renderCal();renderMyReqs();toast(T[lang].cancelled);}catch(e){toast(T[lang].errorPrefix+e.message);}}
+async function cancelReq(id){
+  const cr=reqs.find(r=>r.id===id);
+  try{
+  if(cr&&cr.status==='approved'&&msgTableOk){
+    const txt=`ℹ️ ${cr.doctor} ביטל/ה בקשה שכבר אושרה (לפני פרסום): ${shiftDesc(cr)}. המקום פנוי כעת.\nℹ️ ${cr.doctor} withdrew a request that was already approved (before publishing): ${shiftDesc(cr)}. The slot is now open.`;
+    const to=['admin'].concat(roleActive[cr.specialty]?[cr.specialty]:[]);
+    try{const ins=await dbInsMany('messages',to.map(r=>({kind:'msg',from_role:'doctor',from_doctor:cr.doctor,to_role:r,specialty:cr.specialty,category:'other',body:txt,is_read:false})));msgs.push(...ins);}catch(e){}
+  }
+  await dbDel('requests',id);reqs=reqs.filter(r=>r.id!==id);renderCal();renderMyReqs();toast(T[lang].cancelled);}catch(e){toast(T[lang].errorPrefix+e.message);}}
 
 // ══════════════════════════════════════
 // GIVE AWAY
@@ -1481,7 +1560,7 @@ async function cancelReq(id){try{await dbDel('requests',id);reqs=reqs.filter(r=>
 function openGiveawayModal(reqId){
   const sel=document.getElementById('ga-shift');sel.innerHTML='';
   const givenIds=swaps.filter(s=>s.type==='giveaway'&&s.requester===curDoc&&['giveaway','claimed'].includes(s.status)).map(s=>s.requester_req_id);
-  const available=reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&!givenIds.includes(r.id));
+  const available=reqs.filter(r=>r.doctor===curDoc&&docStatus(r)==='approved'&&!givenIds.includes(r.id));
   if(!available.length){toast(lang==='he'?'אין משמרות אושרות למסירה':'No eligible approved shifts');return;}
   available.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);if(r.id===reqId)o.selected=true;sel.appendChild(o);});
   document.getElementById('ga-reason').value='';
@@ -1507,6 +1586,7 @@ async function claimGiveaway(swapId){
     await dbUpd('swaps',swapId,{status:'claimed',target_doctor:curDoc,note:s.note+` → ${lang==='he'?'נתבע':'claimed'} ${curDoc}`});
     s.status='claimed';s.target_doctor=curDoc;
     renderExchangeTab();updateExchangeNotif();toast(T[lang].claimSent);
+    sendNotifs([{doctor:s.requester,he:`🎁 ${curDoc} ביקש/ה לקחת את המשמרת שמסרת. ממתין לאישור ההנהלה.`,en:`🎁 ${curDoc} claimed the shift you gave away. Waiting for management approval.`}]);
   }catch(e){toast(T[lang].errorPrefix+e.message);}
 }
 
@@ -1516,13 +1596,13 @@ async function claimGiveaway(swapId){
 function openSwapModal(myId){
   const my=document.getElementById('sw-my');my.innerHTML='';
   const givenIds=swaps.filter(s=>s.type==='giveaway'&&s.requester===curDoc&&['giveaway','claimed'].includes(s.status)).map(s=>s.requester_req_id);
-  reqs.filter(r=>r.doctor===curDoc&&r.status==='approved'&&!givenIds.includes(r.id)).forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);if(r.id===myId)o.selected=true;my.appendChild(o);});
+  reqs.filter(r=>r.doctor===curDoc&&docStatus(r)==='approved'&&!givenIds.includes(r.id)).forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);if(r.id===myId)o.selected=true;my.appendChild(o);});
   const other=document.getElementById('sw-other');
   other.innerHTML=`<option value="">${lang==='he'?'— בחר רופא —':'— Select doctor —'}</option>`;
   (DOCS[curSpec]||[]).filter(d=>d.name!==curDoc).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;other.appendChild(o);});
   other.onchange=()=>{
     const their=document.getElementById('sw-their');their.innerHTML=`<option value="">${lang==='he'?'— כל משמרת —':'— Any shift —'}</option>`;
-    reqs.filter(r=>r.doctor===other.value&&r.status==='approved').forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);their.appendChild(o);});
+    reqs.filter(r=>r.doctor===other.value&&docStatus(r)==='approved').forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);their.appendChild(o);});
   };
   openModal('modal-swap');
 }
@@ -1532,7 +1612,8 @@ async function submitSwap(){
   const myReq=reqs.find(r=>r.id==myId);
   try{
     const row={type:'swap',requester:curDoc,requester_req_id:parseInt(myId),target_doctor:otherDoc,target_req_id:theirId?parseInt(theirId):null,specialty:curSpec,status:'swap_pending',target_approval:'pending',admin_status:'pending',note:`${curDoc} ⇄ ${otherDoc}: ${shiftDesc(myReq)}`};
-    const ins=await dbIns('swaps',row);swaps.push(ins[0]);closeModal('modal-swap');renderMyReqs();renderExchangeTab();toast(T[lang].swapSent);
+    const ins=await dbIns('swaps',row);swaps.push(ins[0]);closeModal('modal-swap');
+    sendNotifs([{doctor:otherDoc,he:`🔄 ${curDoc} מציע/ה לך החלפה: ${shiftDesc(myReq)}. אשר/י או דחה/י בלשונית "זמין והחלפות".`,en:`🔄 ${curDoc} proposes a swap: ${shiftDesc(myReq)}. Accept or decline in "Available & Swaps".`}]);renderMyReqs();renderExchangeTab();toast(T[lang].swapSent);
   }catch(e){toast(T[lang].errorPrefix+e.message);}
 }
 async function respondSwap(swapId,accepted){
@@ -1540,9 +1621,11 @@ async function respondSwap(swapId,accepted){
   if(accepted){
     await dbUpd('swaps',swapId,{target_approval:'accepted',status:'swap_pending'});
     s.target_approval='accepted';toast(T[lang].swapAccepted);
+    sendNotifs([{doctor:s.requester,he:`👍 ${curDoc} הסכים/ה להחלפה. ממתין לאישור ההנהלה.`,en:`👍 ${curDoc} accepted your swap. Waiting for management approval.`}]);
   }else{
     await dbUpd('swaps',swapId,{target_approval:'declined',status:'swap_rejected'});
     s.target_approval='declined';s.status='swap_rejected';toast(T[lang].swapDeclined);
+    sendNotifs([{doctor:s.requester,he:`👎 ${curDoc} דחה/תה את הצעת ההחלפה.`,en:`👎 ${curDoc} declined your swap proposal.`}]);
   }
   renderExchangeTab();updateExchangeNotif();
 }
@@ -1823,6 +1906,175 @@ function exportReportCSV(){
 }
 
 // ══════════════════════════════════════
+// MESSAGES & NOTIFICATIONS
+// One table "messages":
+//  kind='notif' → automatic notice to a doctor (body = JSON {he,en})
+//  kind='msg'   → conversation message. Root has thread_id=null; replies point to the root.
+//  Sides: doctor (from_doctor / to_doctor) and management role: 'admin' | 'ortho' | 'pedia' | 'internal'
+// ══════════════════════════════════════
+let msgs=[],msgTableOk=true,openThreadId=null,roleActive={ortho:false,pedia:false,internal:false};
+const NO_MSG_TABLE_RE=/messages|PGRST205|42P01|does not exist/i;
+async function dbInsMany(t,rows){if(!rows.length)return[];const r=await fetch(api(t),{method:'POST',headers:H,body:JSON.stringify(rows)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function dbUpdIds(t,ids,patch){if(!ids.length)return;const r=await fetch(api(t,`id=in.(${ids.join(',')})`),{method:'PATCH',headers:H,body:JSON.stringify(patch)});if(!r.ok)throw new Error(await r.text());}
+// Fire-and-forget: a notification must never block or break the action that triggered it
+async function sendNotifs(list){
+  const rows=list.filter(x=>x&&x.doctor).map(x=>({kind:'notif',from_role:'system',to_role:'doctor',to_doctor:x.doctor,body:JSON.stringify({he:x.he,en:x.en}),is_read:false}));
+  if(!rows.length||!msgTableOk)return;
+  try{const ins=await dbInsMany('messages',rows);msgs.push(...ins);updateMsgBadges();}catch(e){console.warn('notification not sent',e);}
+}
+// Approved/rejected requests → one grouped notification per doctor
+function notifyRequestResults(list,opts){
+  opts=opts||{};const by={};list.forEach(r=>{if(r&&(r.status==='approved'||r.status==='rejected')&&(opts.force||isPubDate(r.date)))(by[r.doctor]=by[r.doctor]||[]).push(r);});
+  const out=[];
+  Object.entries(by).forEach(([doc,rs])=>{
+    rs.sort((a,b)=>a.date.localeCompare(b.date));
+    const desc=(r,lg)=>`${r.date.slice(8,10)}/${r.date.slice(5,7)} ${T[lg].report[r.site.toLowerCase()]||r.site}${r.shift_type?' '+T[lg].shifts[r.shift_type]:''}`;
+    const part=(lg,st)=>{const x=rs.filter(r=>r.status===st);if(!x.length)return'';const lines=x.slice(0,8).map(r=>desc(r,lg)).join(', ')+(x.length>8?` (+${x.length-8})`:'');
+      return lg==='he'?(st==='approved'?`✅ אושרו ${x.length}: ${lines}`:`❌ לא אושרו ${x.length}: ${lines}`):(st==='approved'?`✅ ${x.length} approved: ${lines}`:`❌ ${x.length} not approved: ${lines}`);};
+    const pre=opts.prefix||{he:'',en:''};
+    out.push({doctor:doc,he:pre.he+['approved','rejected'].map(st=>part('he',st)).filter(Boolean).join('\n'),en:pre.en+['approved','rejected'].map(st=>part('en',st)).filter(Boolean).join('\n')});
+  });
+  sendNotifs(out);
+}
+function notifText(m){try{const o=JSON.parse(m.body);return o[lang]||o.en||o.he||m.body;}catch(e){return m.body;}}
+function fmtMsgTime(ts){if(!ts)return'';const d=new Date(ts);return`${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+const MSG_CATS=['suggestion','complaint','question','request','other'];
+function catLabel(c){const he=lang==='he';return({suggestion:he?'💡 הצעה':'💡 Suggestion',complaint:he?'⚠️ תלונה':'⚠️ Complaint',question:he?'❓ שאלה':'❓ Question',request:he?'📝 בקשה':'📝 Request',other:he?'💬 אחר':'💬 Other',announcement:he?'📣 הודעה':'📣 Announcement'})[c]||c||'';}
+function mgmtLabel(role){const he=lang==='he';return role==='admin'?(he?'ההנהלה (מנהל רפואי)':'Management (medical director)'):(he?'מנהל/ת '+specLbl(role):specLbl(role)+' manager');}
+// Thread helpers
+const threadRoot=m=>m.thread_id?msgs.find(x=>x.id===m.thread_id):m;
+const threadMsgs=root=>msgs.filter(m=>m.kind==='msg'&&(m.id===root.id||m.thread_id===root.id)).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at))||a.id-b.id);
+const threadDoctor=root=>root.from_role==='doctor'?root.from_doctor:root.to_doctor;
+const threadMgmt=root=>root.from_role==='doctor'?root.to_role:root.from_role;
+const myMgmtRole=()=>adminRole==='admin'?'admin':scopeSpec();
+// Unread counts
+function doctorUnread(){return curDoc?msgs.filter(m=>m.to_role==='doctor'&&m.to_doctor===curDoc&&!m.is_read).length:0;}
+function inboxUnread(){const r=myMgmtRole();return r?msgs.filter(m=>m.kind==='msg'&&m.to_role===r&&!m.is_read).length:0;}
+function setBadge(el,n){if(!el)return;const ex=el.querySelector('.notif-badge');if(ex)ex.remove();if(n>0){const b=document.createElement('span');b.className='notif-badge';b.textContent=n>99?'99+':n;el.appendChild(b);}}
+function updateMsgBadges(){const n=doctorUnread();setBadge(document.getElementById('doc-bell'),n);setBadge(document.getElementById('ditab-messages'),n);setBadge(document.getElementById('itab-inbox'),inboxUnread());}
+async function markRead(ids){ids=ids.filter(Boolean);if(!ids.length)return;msgs.forEach(m=>{if(ids.includes(m.id))m.is_read=true;});updateMsgBadges();try{await dbUpdIds('messages',ids,{is_read:true});}catch(e){console.warn(e);}}
+// Keep typed text when the 30-second auto-refresh redraws a section
+function keepTyping(container,fn){
+  const box=typeof container==='string'?document.getElementById(container):container;const saved={};let focusId=null;
+  if(box)box.querySelectorAll('textarea[id],input[id]').forEach(el=>{saved[el.id]=el.value;if(document.activeElement===el)focusId=el.id;});
+  fn();
+  Object.entries(saved).forEach(([id,v])=>{const el=document.getElementById(id);if(el&&v)el.value=v;});
+  if(focusId){const el=document.getElementById(focusId);if(el){el.focus();try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}}
+}
+function refreshMsgViews(){
+  updateMsgBadges();
+  const dt=document.getElementById('dtab-messages');if(dt&&dt.style.display!=='none'&&document.getElementById('panel-doctor').classList.contains('active'))renderDoctorMessages(false);
+  const it=document.getElementById('tab-inbox');if(it&&it.style.display!=='none'&&adminOk)renderInbox();
+}
+function msgSetupWarning(){return msgTableOk?'':`<div style="background:#fdecea;border:1px solid #f5c2bd;border-radius:var(--radius);padding:8px 10px;font-size:12px;margin-bottom:8px">${lang==='he'?'טבלת ההודעות עדיין לא נוצרה ב-Supabase — יש להריץ את קוד ה-SQL להגדרה.':'The messages table is not set up in Supabase yet — run the setup SQL.'}</div>`;}
+
+// ── Doctor side ──
+function populateDoctorMsgForm(){
+  const he=lang==='he';const to=document.getElementById('dm-to');const cat=document.getElementById('dm-cat');if(!to||!cat)return;
+  const curTo=to.value,curCat=cat.value;
+  to.innerHTML=`<option value="admin">${he?'אל: ':'To: '}${mgmtLabel('admin')}</option>`+(curSpec&&roleActive[curSpec]?`<option value="${curSpec}">${he?'אל: ':'To: '}${mgmtLabel(curSpec)}</option>`:'');
+  cat.innerHTML=MSG_CATS.map(c=>`<option value="${c}">${catLabel(c)}</option>`).join('');
+  if([...to.options].some(o=>o.value===curTo))to.value=curTo;if(curCat)cat.value=curCat;
+  document.getElementById('dm-body').placeholder=he?'כתוב/כתבי כאן את ההודעה...':'Write your message here...';
+}
+async function sendDoctorMessage(){
+  const he=lang==='he';if(!curDoc)return;
+  const body=document.getElementById('dm-body').value.trim();if(!body){toast(he?'ההודעה ריקה':'The message is empty');return;}
+  const to=document.getElementById('dm-to').value;const category=document.getElementById('dm-cat').value;
+  try{const ins=await dbIns('messages',{kind:'msg',from_role:'doctor',from_doctor:curDoc,to_role:to,specialty:curSpec,category,body,is_read:false});
+    msgs.push(ins[0]);document.getElementById('dm-body').value='';openThreadId=ins[0].id;renderDoctorMessages(false);
+    toast(he?`✓ נשלח אל ${mgmtLabel(to)}`:`✓ Sent to ${mgmtLabel(to)}`);}
+  catch(e){toast(NO_MSG_TABLE_RE.test(e.message)?(he?'יש להריץ קודם את קוד ה-SQL ליצירת טבלת messages':'Run the messages setup SQL first'):T[lang].errorPrefix+e.message);}
+}
+function threadHtml(root,viewer){
+  // viewer: 'doctor' or a management role
+  const he=lang==='he';const list=threadMsgs(root);const doc=threadDoctor(root);const mg=threadMgmt(root);
+  const mine=m=>viewer==='doctor'?m.from_role==='doctor':m.from_role!=='doctor';
+  const unread=list.some(m=>!m.is_read&&(viewer==='doctor'?(m.to_role==='doctor'&&m.to_doctor===curDoc):m.to_role===viewer));
+  const last=list[list.length-1];const open=openThreadId===root.id;
+  const who=viewer==='doctor'?mgmtLabel(mg):`${escHtml(doc)} <span style="font-size:11px;color:var(--text3)">${specLbl(getDocSpec(doc)||root.specialty||'')}</span>`;
+  let h=`<div class="thread${unread?' unread':''}"><div class="thread-head" onclick="toggleThread(${root.id},'${viewer}')">
+    <strong style="font-size:13px">${who}</strong> <span class="cat-pill">${catLabel(root.category)}</span>
+    <span style="font-size:12px;color:var(--text2);flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(last.body).slice(0,90)}</span>
+    <span style="font-size:11px;color:var(--text3)">${fmtMsgTime(last.created_at)} · ${list.length} ${open?'▴':'▾'}</span>${unread?'<span class="notif-badge">●</span>':''}</div>`;
+  if(open){
+    h+=`<div class="thread-body">`+list.map(m=>`<div class="bubble ${mine(m)?'me':'them'}">${escHtml(m.body)}<div class="bt">${m.from_role==='doctor'?escHtml(m.from_doctor):mgmtLabel(m.from_role)} · ${fmtMsgTime(m.created_at)}${mine(m)&&m.is_read?' · ✓✓':''}</div></div>`).join('')+
+      `<textarea id="reply-${root.id}" maxlength="2000" placeholder="${he?'תשובה...':'Reply...'}"></textarea>
+      <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="sendReply(${root.id},'${viewer}')">↩ ${he?'השב':'Reply'}</button></div></div>`;
+  }
+  return h+'</div>';
+}
+function toggleThread(id,viewer){
+  openThreadId=openThreadId===id?null:id;
+  if(openThreadId){const root=msgs.find(m=>m.id===id);if(root)markRead(threadMsgs(root).filter(m=>!m.is_read&&(viewer==='doctor'?(m.to_role==='doctor'&&m.to_doctor===curDoc):m.to_role===viewer)).map(m=>m.id));}
+  if(viewer==='doctor')renderDoctorMessages(false);else renderInbox();
+}
+async function sendReply(rootId,viewer){
+  const he=lang==='he';const root=msgs.find(m=>m.id===rootId);if(!root)return;
+  const ta=document.getElementById('reply-'+rootId);const body=(ta.value||'').trim();if(!body)return;
+  const doc=threadDoctor(root),mg=threadMgmt(root);
+  const row=viewer==='doctor'?{kind:'msg',from_role:'doctor',from_doctor:doc,to_role:mg,specialty:root.specialty,category:root.category,body,thread_id:rootId,is_read:false}
+                            :{kind:'msg',from_role:viewer,to_role:'doctor',to_doctor:doc,specialty:root.specialty,category:root.category,body,thread_id:rootId,is_read:false};
+  try{const ins=await dbIns('messages',row);msgs.push(ins[0]);ta.value='';if(viewer==='doctor')renderDoctorMessages(false);else renderInbox();toast(he?'✓ נשלח':'✓ Sent');}
+  catch(e){toast(T[lang].errorPrefix+e.message);}
+}
+function renderDoctorMessages(markNotifsRead){
+  const he=lang==='he';if(!curDoc)return;
+  // Conversations
+  keepTyping('dm-threads',()=>{
+    const roots=msgs.filter(m=>m.kind==='msg'&&!m.thread_id&&threadDoctor(m)===curDoc);
+    const lastT=r=>{const l=threadMsgs(r);return String(l[l.length-1].created_at);};
+    roots.sort((a,b)=>lastT(b).localeCompare(lastT(a)));
+    document.getElementById('dm-threads').innerHTML=msgSetupWarning()+(roots.length?roots.map(r=>threadHtml(r,'doctor')).join(''):`<div class="empty-state" style="padding:14px"><div class="icon">💬</div>${he?'עדיין אין שיחות. אפשר לשלוח הודעה למעלה.':'No conversations yet. Send a message above.'}</div>`);
+  });
+  // Notifications
+  const nots=msgs.filter(m=>m.kind==='notif'&&m.to_doctor===curDoc).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))||b.id-a.id).slice(0,40);
+  document.getElementById('dm-notifs').innerHTML=nots.length?`<div class="msg-list">${nots.map(m=>`<div class="msg-item${m.is_read?'':' unread'}"><div class="msg-meta">${fmtMsgTime(m.created_at)}${m.is_read?'':` · <strong style="color:var(--accent)">${he?'חדש':'New'}</strong>`}</div><div class="msg-body">${escHtml(notifText(m))}</div></div>`).join('')}</div>`
+    :`<div class="empty-state" style="padding:14px"><div class="icon">🔔</div>${he?'אין התראות':'No notifications'}</div>`;
+  // Opening the tab marks notifications as read (they stay highlighted until the next refresh)
+  if(markNotifsRead)markRead(nots.filter(m=>!m.is_read).map(m=>m.id));
+  updateMsgBadges();
+}
+
+// ── Management side (main admin + specialty managers) ──
+function renderInbox(){
+  const he=lang==='he';const role=myMgmtRole();if(!role)return;
+  const f=document.getElementById('inbox-filter');const fv=f.value||'all';
+  f.innerHTML=`<option value="all">${he?'הכל':'All'}</option><option value="unread">${he?'לא נקראו':'Unread'}</option>`+MSG_CATS.map(c=>`<option value="${c}">${catLabel(c)}</option>`).join('');f.value=fv;
+  keepTyping('inbox-list',()=>{
+    // Announcements sent to many doctors only appear here once a doctor replies
+    let roots=msgs.filter(m=>m.kind==='msg'&&!m.thread_id&&threadMgmt(m)===role&&(m.from_role==='doctor'||threadMsgs(m).length>1));
+    if(fv==='unread')roots=roots.filter(r=>threadMsgs(r).some(m=>!m.is_read&&m.to_role===role));
+    else if(fv!=='all')roots=roots.filter(r=>r.category===fv);
+    const lastT=r=>{const l=threadMsgs(r);return String(l[l.length-1].created_at);};
+    roots.sort((a,b)=>lastT(b).localeCompare(lastT(a)));
+    document.getElementById('inbox-list').innerHTML=msgSetupWarning()+(roots.length?roots.map(r=>threadHtml(r,role)).join(''):`<div class="empty-state" style="padding:14px"><div class="icon">📥</div>${he?'אין הודעות':'No messages'}</div>`);
+  });
+  updateMsgBadges();
+}
+function populateAdminMsgTo(){
+  const he=lang==='he';const sel=document.getElementById('am-to');if(!sel)return;const cur=sel.value;
+  const sp=scopeSpec();let o='';
+  if(!sp)o+=`<option value="all">${he?'כל הרופאים':'All doctors'}</option>`;
+  (sp?[sp]:['ortho','pedia','internal']).forEach(x=>{o+=`<option value="spec:${x}">${he?'כל רופאי ':'All '}${specLbl(x)}${he?'':' doctors'}</option>`;});
+  (sp?[sp]:['ortho','pedia','internal']).forEach(x=>{o+=`<optgroup label="${specLbl(x)}">`+(DOCS[x]||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(d=>`<option value="doc:${escHtml(d.name)}">${escHtml(d.name)}</option>`).join('')+'</optgroup>';});
+  sel.innerHTML=o;if(cur&&[...sel.options].some(x=>x.value===cur))sel.value=cur;
+  document.getElementById('am-body').placeholder=he?'כתוב/כתבי כאן את ההודעה...':'Write your message here...';
+}
+async function sendAdminMessage(){
+  const he=lang==='he';const role=myMgmtRole();if(!role)return;
+  const body=document.getElementById('am-body').value.trim();if(!body){toast(he?'ההודעה ריקה':'The message is empty');return;}
+  const to=document.getElementById('am-to').value;let docs=[];
+  if(to==='all')docs=getAllDocs();else if(to.startsWith('spec:'))docs=DOCS[to.slice(5)]||[];else docs=getAllDocs().filter(d=>d.name===to.slice(4));
+  if(scopeSpec())docs=docs.filter(d=>d.specialty===scopeSpec());
+  if(!docs.length)return;
+  if(docs.length>1&&!confirm(he?`לשלוח את ההודעה ל-${docs.length} רופאים?`:`Send this message to ${docs.length} doctors?`))return;
+  try{const ins=await dbInsMany('messages',docs.map(d=>({kind:'msg',from_role:role,to_role:'doctor',to_doctor:d.name,specialty:d.specialty,category:'announcement',body,is_read:false})));
+    msgs.push(...ins);document.getElementById('am-body').value='';renderInbox();toast(he?`✓ נשלח ל-${docs.length} רופאים`:`✓ Sent to ${docs.length} doctor(s)`);}
+  catch(e){toast(NO_MSG_TABLE_RE.test(e.message)?(he?'יש להריץ קודם את קוד ה-SQL ליצירת טבלת messages':'Run the messages setup SQL first'):T[lang].errorPrefix+e.message);}
+}
+
+// ══════════════════════════════════════
 // SCHEDULING RULES — one clinic per shift, and never above slot capacity
 // ══════════════════════════════════════
 const sameShift=(a,b)=>(a||null)===(b||null);
@@ -1893,6 +2145,9 @@ async function saveSos(){
       else{const ins=await dbIns('requests',{doctor:doc,specialty:sp,date:ds,site,status:'approved',shift_type:st});reqs.push(ins[0]);}
     }
     closeModal('modal-sos');renderSchedule();renderRequests();renderStats();
+    const sd=`${ds} · ${siteName(site)}${st?' · '+shiftName(st):''}`;
+    if(doc){if(isPubDate(ds))sendNotifs([{doctor:doc,he:`🆘 שובצת כתגבור: ${ds} · ${T.he.report[site.toLowerCase()]||site}${st?' · '+T.he.shifts[st]:''}.`,en:`🆘 You were added as an extra doctor: ${ds} · ${T.en.report[site.toLowerCase()]||site}${st?' · '+T.en.shifts[st]:''}.`}]);}
+    else if(isPubDate(ds))sendNotifs((DOCS[sp]||[]).map(d=>({doctor:d.name,he:`🆘 נפתח מקום תגבור: ${ds} · ${T.he.report[site.toLowerCase()]||site}${st?' · '+T.he.shifts[st]:''}. אפשר להתנדב בלשונית "לוח סופי".`,en:`🆘 Extra slot open: ${ds} · ${T.en.report[site.toLowerCase()]||site}${st?' · '+T.en.shifts[st]:''}. Volunteer in the "Final Schedule" tab.`})));
     toast(doc?(he?`🆘 ${doc} נוסף/ה כתגבור`:`🆘 ${doc} added as extra`):(he?'🆘 נפתח מקום נוסף — רופאים יכולים להתנדב בלוח הסופי':'🆘 Extra slot opened — doctors can volunteer on the Final Schedule'));
   }catch(e){toast(NO_TABLE_RE.test(e.message)?(he?'יש להריץ קודם את קוד ה-SQL ליצירת app_settings':'Run the app_settings setup SQL first'):T[lang].errorPrefix+e.message);}
   finally{sync(false);}
@@ -1911,7 +2166,7 @@ function extraTag(ds,site,sp,st){const x=getExtra(ds,site,sp,st);return x?`<span
 // ROLES — UI, LOGOUT, SECRETARY VIEW, TODAY BOARD
 // ══════════════════════════════════════
 function applyRoleUI(){
-  const he=lang==='he';
+  const he=lang==='he';setTimeout(updateMsgBadges,0);
   const allowed=adminRole==='admin'?ADMIN_TABS_BY_ROLE.admin:ADMIN_TABS_BY_ROLE.manager;
   document.querySelectorAll('.admin-inner-tabs .itab').forEach(b=>{b.style.display=allowed.includes(b.id.replace('itab-',''))?'':'none';});
   const bar=`<span class="role-pill">👤 ${roleLabel(adminRole)}</span>${scopeSpec()?`<span style="font-size:12px;color:var(--text2)">${he?'רואה ומנהל/ת רק את '+specLbl(scopeSpec()):'Seeing and managing '+specLbl(scopeSpec())+' only'}</span>`:''}<button class="btn btn-ghost btn-sm" style="margin-inline-start:auto" onclick="logoutAdmin()">🚪 ${he?'יציאה':'Log out'}</button>`;
@@ -1923,7 +2178,7 @@ function applyRoleUI(){
 }
 function logoutAdmin(){
   const wasScoped=!!scopeSpec();
-  adminOk=false;adminRole=null;
+  adminOk=false;adminRole=null;openThreadId=null;{const am=document.getElementById('am-to');if(am)am.innerHTML='';}
   ['f-spec','sched-filter-spec','report-spec'].forEach(id=>{const s=document.getElementById(id);if(s){s.disabled=false;if(wasScoped)s.value='';}});
   document.getElementById('admin-role-bar').innerHTML='';document.getElementById('viewer-role-bar').innerHTML='';
   showPanel('doctor',document.getElementById('tab-doctor-btn'));
@@ -2197,6 +2452,13 @@ async function publishMonth(mk){
     const ins=await dbIns('published_months',{month_key:mk});
     publishedMonths[mk]=ins[0].id;
     renderPublishTab();toast(T[lang].published);
+    // One notification per doctor: "schedule published" + their own approved / not-approved shifts for that month
+    const[py,pm]=mk.split('-').map(Number);
+    const pre={he:`📅 לוח המשמרות ל${T.he.months[pm-1]} ${py} פורסם.\n`,en:`📅 The schedule for ${T.en.months[pm-1]} ${py} has been published.\n`};
+    const decided=reqs.filter(r=>r.date.startsWith(mk)&&(r.status==='approved'||r.status==='rejected'));
+    const withResults=new Set(decided.map(r=>r.doctor));
+    notifyRequestResults(decided,{force:true,prefix:pre});
+    sendNotifs(getAllDocs().filter(d=>!withResults.has(d.name)).map(d=>({doctor:d.name,he:pre.he+'אפשר לראות אותו בלשונית "לוח סופי".',en:pre.en+'See the "Final Schedule" tab.'})));
   }catch(e){toast(T[lang].errorPrefix+e.message);}
 }
 async function unpublishMonth(mk){
@@ -2255,9 +2517,10 @@ function renderRequests(){
   wrap.innerHTML=h+'</tbody></table>';renderStats();
 }
 async function setStatus(id,status){
-  const rr=reqs.find(r=>r.id===id);
+  const rr=reqs.find(r=>r.id===id);const prevStatus=rr?rr.status:null;
   if(status==='approved'&&rr){const why=approvalBlock(rr);if(why){toast('⛔ '+why,4500);return;}}
-  try{sync(true);await dbUpd('requests',id,{status});const r=reqs.find(r=>r.id===id);if(r)r.status=status;renderRequests();toast(T[lang].statuses[status]||status);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+  try{sync(true);await dbUpd('requests',id,{status});const r=reqs.find(r=>r.id===id);if(r)r.status=status;
+  if(r&&prevStatus!==status&&status!=='pending')notifyRequestResults([r]);renderRequests();toast(T[lang].statuses[status]||status);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
 function adminEdit(id){
   const r=reqs.find(r=>r.id===id);if(!r)return;
   const siteList=SITES.join(' / ');
@@ -2275,11 +2538,11 @@ async function bulkApprove(){
   const ok=[];let skipped=0;
   p.forEach(r=>{if(approvalBlock(r)){skipped++;return;}r.status='approved';ok.push(r);}); // mark as we go so capacity counts include earlier approvals
   sync(true);
-  try{await Promise.all(ok.map(r=>dbUpd('requests',r.id,{status:'approved'})));renderRequests();
+  try{await Promise.all(ok.map(r=>dbUpd('requests',r.id,{status:'approved'})));renderRequests();notifyRequestResults(ok);
     toast(lang==='he'?`✓ אושרו ${ok.length}${skipped?` · ${skipped} נשארו ממתינים (משמרת מלאה / רופא במרפאה אחרת)`:''}`:`✓ Approved ${ok.length}${skipped?` · ${skipped} left pending (shift full / doctor at another clinic)`:''}`,5000);}
   catch(e){ok.forEach(r=>r.status='pending');toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
 }
-async function bulkReject(){const p=reqs.filter(r=>r.status==='pending'&&inScope(r));sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'rejected'})));p.forEach(r=>r.status='rejected');renderRequests();toast(`✗ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
+async function bulkReject(){const p=reqs.filter(r=>r.status==='pending'&&inScope(r));sync(true);try{await Promise.all(p.map(r=>dbUpd('requests',r.id,{status:'rejected'})));p.forEach(r=>r.status='rejected');notifyRequestResults(p);renderRequests();toast(`✗ ${p.length}`);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}}
 
 // ══════════════════════════════════════
 // SCHEDULE + MOVE
@@ -2388,7 +2651,7 @@ async function applyConflict(){
   if(all.filter(r=>document.getElementById('cr-'+r.id)?.checked).length>c.needed){toast(lang==='he'?`בחר לכל היותר ${c.needed}`:`Select at most ${c.needed}`);return;}
   const dbl=all.find(r=>document.getElementById('cr-'+r.id)?.checked&&otherClinicReq(r.doctor,r.date,r.shift_type,r.site,['approved'],[r.id]));
   if(dbl){toast('⛔ '+(lang==='he'?`${dbl.doctor} כבר משובץ/ת במרפאה אחרת באותה משמרת`:`${dbl.doctor} is already assigned to another clinic in this shift`),4500);return;}
-  sync(true);try{await Promise.all(all.map(r=>{const s=document.getElementById('cr-'+r.id)?.checked?'approved':'rejected';r.status=s;return dbUpd('requests',r.id,{status:s});}));closeModal('modal-conflict');renderConflicts();renderRequests();toast(T[lang].resolved);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
+  sync(true);try{await Promise.all(all.map(r=>{const s=document.getElementById('cr-'+r.id)?.checked?'approved':'rejected';r._was=r.status;r.status=s;return dbUpd('requests',r.id,{status:s});}));notifyRequestResults(all.filter(r=>r._was!==r.status));closeModal('modal-conflict');renderConflicts();renderRequests();toast(T[lang].resolved);}catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
 }
 
 // ══════════════════════════════════════
@@ -2421,13 +2684,17 @@ async function approveGiveaway(swapId){
     s.admin_status='approved';s.status='swap_approved';
     renderAdminExchange();renderRequests();renderMyReqs();renderCal();
     toast(T[lang].giveawayApproved+claimer);
+    sendNotifs([{doctor:claimer,he:`✅ אושר: המשמרת ${shiftDesc(origReq)} עברה אליך (מסירה מ-${s.requester}).`,en:`✅ Approved: shift ${shiftDesc(origReq)} is now yours (giveaway from ${s.requester}).`},
+      {doctor:s.requester,he:`✅ המסירה אושרה: ${claimer} ייקח/תיקח את המשמרת ${shiftDesc(origReq)}.`,en:`✅ Giveaway approved: ${claimer} takes your shift ${shiftDesc(origReq)}.`}]);
   }catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
 }
 async function rejectGiveaway(swapId){
   const s=swaps.find(s=>s.id===swapId);if(!s)return;
   try{
+    const rejClaimer=s.target_doctor;
     await dbUpd('swaps',swapId,{status:'giveaway',target_doctor:null,admin_status:'pending'});
     s.status='giveaway';s.target_doctor=null;s.admin_status='pending';
+    if(rejClaimer){const gr=reqs.find(r=>r.id===s.requester_req_id);sendNotifs([{doctor:rejClaimer,he:`❌ בקשתך לקחת את המשמרת ${gr?shiftDesc(gr):''} לא אושרה.`,en:`❌ Your claim for shift ${gr?shiftDesc(gr):''} was not approved.`}]);}
     renderAdminExchange();renderMyReqs();renderExchangeTab();toast(T[lang].giveawayRejected);
   }catch(e){toast(T[lang].errorPrefix+e.message);}
 }
@@ -2460,11 +2727,13 @@ async function approveSwap(swapId){
     if(rA&&rB){const[tS,tSh,tD]=[rA.site,rA.shift_type,rA.date];await dbUpd('requests',rA.id,{site:rB.site,shift_type:rB.shift_type,date:rB.date});await dbUpd('requests',rB.id,{site:tS,shift_type:tSh,date:tD});rA.site=rB.site;rA.shift_type=rB.shift_type;rA.date=rB.date;rB.site=tS;rB.shift_type=tSh;rB.date=tD;}
     await dbUpd('swaps',swapId,{admin_status:'approved',status:'swap_approved'});s.admin_status='approved';s.status='swap_approved';
     renderAdminExchange();renderRequests();toast(T[lang].swapApproved);
+    sendNotifs([s.requester,s.target_doctor].filter(Boolean).map(d=>({doctor:d,he:`✅ ההחלפה אושרה: ${s.requester} ⇄ ${s.target_doctor}. בדוק/י את "המשמרות שלי".`,en:`✅ Swap approved: ${s.requester} ⇄ ${s.target_doctor}. Check "My Shifts".`})));
   }catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
 }
 async function rejectSwap(swapId){
   const s=swaps.find(s=>s.id===swapId);if(!s)return;
-  try{await dbUpd('swaps',swapId,{admin_status:'rejected',status:'swap_rejected'});s.admin_status='rejected';s.status='swap_rejected';renderAdminExchange();toast(T[lang].swapRejected);}
+  try{await dbUpd('swaps',swapId,{admin_status:'rejected',status:'swap_rejected'});s.admin_status='rejected';s.status='swap_rejected';renderAdminExchange();toast(T[lang].swapRejected);
+    sendNotifs([s.requester,s.target_doctor].filter(Boolean).map(d=>({doctor:d,he:`❌ ההחלפה ${s.requester} ⇄ ${s.target_doctor} לא אושרה.`,en:`❌ Swap ${s.requester} ⇄ ${s.target_doctor} was not approved.`})));}
   catch(e){toast(T[lang].errorPrefix+e.message);}
 }
 
@@ -2495,6 +2764,7 @@ async function autoSchedule(){
       });
     }
     const bs=10;for(let i=0;i<updates.length;i+=bs)await Promise.all(updates.slice(i,i+bs).map(u=>dbUpd('requests',u.id,{status:u.s})));
+    notifyRequestResults(updates.map(u=>reqs.find(r=>r.id===u.id)).filter(Boolean));
     renderRequests();renderStats();toast(T[lang].autoResult+app+T[lang].autoRejected+rej);
   }catch(e){toast(T[lang].errorPrefix+e.message);}finally{showLoad(false);}
 }
@@ -2571,6 +2841,7 @@ async function applyDocRename(d,newName){
   await dbUpd('doctors',d.id,{name:newName});
   await dbUpdWhere('requests','doctor',old,{doctor:newName});
   try{await dbUpdWhere('swaps','requester',old,{requester:newName});await dbUpdWhere('swaps','target_doctor',old,{target_doctor:newName});}catch(e){}
+  try{await dbUpdWhere('messages','from_doctor',old,{from_doctor:newName});await dbUpdWhere('messages','to_doctor',old,{to_doctor:newName});msgs.forEach(m=>{if(m.from_doctor===old)m.from_doctor=newName;if(m.to_doctor===old)m.to_doctor=newName;});}catch(e){}
   d.name=newName;
   reqs.forEach(r=>{if(r.doctor===old)r.doctor=newName;});
   swaps.forEach(s=>{if(s.requester===old)s.requester=newName;if(s.target_doctor===old)s.target_doctor=newName;});
