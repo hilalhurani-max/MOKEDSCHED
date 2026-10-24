@@ -2803,6 +2803,13 @@ async function rejectSwap(swapId){
 // AUTO-SCHEDULE
 // ══════════════════════════════════════
 async function autoSchedule(){
+  const he=lang==='he';
+  const pw=prompt(he?'הזן סיסמת מנהל כדי להריץ סידור אוטומטי:':'Enter the admin password to run Auto-Schedule:');
+  if(pw===null)return; // cancelled
+  try{
+    const rec=await getAdminPwRecord();
+    if(await sha256(pw)!==rec.hash){alert(he?'סיסמה שגויה. הסידור האוטומטי לא הופעל.':'Wrong password. Auto-Schedule was not run.');return;}
+  }catch(e){alert((he?'לא ניתן לבדוק את הסיסמה: ':'Could not check the password: ')+e.message);return;}
   showLoad(true,T[lang].autoSched);
   try{
     const counts={};reqs.filter(r=>r.status==='approved').forEach(r=>counts[r.doctor]=(counts[r.doctor]||0)+1);
