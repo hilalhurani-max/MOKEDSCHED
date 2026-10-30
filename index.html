@@ -768,7 +768,7 @@ select:focus,input:focus{outline:none;border-color:var(--accent)}
     <div class="info-box t" data-he="הרופא השני יצטרך לאשר לפני שהבקשה מגיעה למנהל." data-en="The other doctor must accept before this reaches the director.">הרופא השני יצטרך לאשר לפני שהבקשה מגיעה למנהל.</div>
     <div class="modal-row"><label><span class="t" data-he="המשמרת שלי למסור" data-en="My shift to give">המשמרת שלי למסור</span></label><select id="sw-my"></select></div>
     <div class="modal-row"><label><span class="t" data-he="רופא להחלפה" data-en="Doctor to swap with">רופא להחלפה</span></label><select id="sw-other"></select></div>
-    <div class="modal-row"><label><span class="t" data-he="המשמרת שלו שאני רוצה (אופציונלי)" data-en="Their shift I want (optional)">המשמרת שלו שאני רוצה (אופציונלי)</span></label><select id="sw-their"></select></div>
+    <div class="modal-row"><label><span class="t" data-he="המשמרת שלו שאני רוצה" data-en="Their shift I want">המשמרת שלו שאני רוצה</span></label><select id="sw-their"></select></div>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('modal-swap')"><span class="t" data-he="ביטול" data-en="Cancel">ביטול</span></button>
       <button class="btn btn-primary" onclick="submitSwap()"><span class="t" data-he="שלח בקשה" data-en="Send request">שלח בקשה</span></button>
@@ -1610,16 +1610,20 @@ function openSwapModal(myId){
   reqs.filter(r=>r.doctor===curDoc&&docStatus(r)==='approved'&&!givenIds.includes(r.id)).forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);if(r.id===myId)o.selected=true;my.appendChild(o);});
   const other=document.getElementById('sw-other');
   other.innerHTML=`<option value="">${lang==='he'?'— בחר רופא —':'— Select doctor —'}</option>`;
+  document.getElementById('sw-their').innerHTML=`<option value="">${lang==='he'?'— בחר/י קודם רופא —':'— Select a doctor first —'}</option>`;
   (DOCS[curSpec]||[]).filter(d=>d.name!==curDoc).forEach(d=>{const o=document.createElement('option');o.value=d.name;o.textContent=d.name;other.appendChild(o);});
   other.onchange=()=>{
-    const their=document.getElementById('sw-their');their.innerHTML=`<option value="">${lang==='he'?'— כל משמרת —':'— Any shift —'}</option>`;
-    reqs.filter(r=>r.doctor===other.value&&docStatus(r)==='approved').forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);their.appendChild(o);});
+    const their=document.getElementById('sw-their');
+    const theirs=other.value?reqs.filter(r=>r.doctor===other.value&&docStatus(r)==='approved').sort((a,b)=>a.date.localeCompare(b.date)):[];
+    their.innerHTML=`<option value="">${!other.value?(lang==='he'?'— בחר/י קודם רופא —':'— Select a doctor first —'):theirs.length?(lang==='he'?'— בחר/י משמרת —':'— Select shift —'):(lang==='he'?'אין לרופא/ה משמרות להחלפה':'This doctor has no shifts to swap')}</option>`;
+    theirs.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=shiftDesc(r);their.appendChild(o);});
   };
   openModal('modal-swap');
 }
 async function submitSwap(){
   const myId=document.getElementById('sw-my').value,otherDoc=document.getElementById('sw-other').value,theirId=document.getElementById('sw-their').value;
-  if(!myId||!otherDoc){toast(lang==='he'?'נא למלא את כל השדות':'Please fill in required fields');return;}
+  if(!myId||!otherDoc||!theirId){toast(lang==='he'?'נא לבחור את המשמרת שלך, רופא, ואת המשמרת שלו/ה':'Please pick your shift, a doctor, and their shift');return;}
+  if(String(myId)===String(theirId)){toast(lang==='he'?'לא ניתן להחליף משמרת עם עצמה':'Cannot swap a shift with itself');return;}
   const myReq=reqs.find(r=>r.id==myId);
   try{
     const row={type:'swap',requester:curDoc,requester_req_id:parseInt(myId),target_doctor:otherDoc,target_req_id:theirId?parseInt(theirId):null,specialty:curSpec,status:'swap_pending',target_approval:'pending',admin_status:'pending',note:`${curDoc} ⇄ ${otherDoc}: ${shiftDesc(myReq)}`};
@@ -2764,8 +2768,17 @@ function renderAdminSwaps(){
   const wrap=document.getElementById('admin-swaps-list');
   const ready=swaps.filter(s=>inScope(s)&&s.type==='swap'&&s.target_approval==='accepted'&&s.admin_status==='pending');
   const L=T[lang];
-  if(!ready.length){wrap.innerHTML=`<div class="empty-state" style="padding:16px"><div class="icon">⇄</div>${lang==='he'?'אין בקשות החלפה ממתינות לאישורך':'No swap requests awaiting your approval'}</div>`;return;}
-  let h=`<table class="req-table"><thead><tr><th>${lang==='he'?'רופא א':'Doctor A'}</th><th>${lang==='he'?'רופא ב':'Doctor B'}</th><th>${lang==='he'?'פרטים':'Details'}</th><th></th></tr></thead><tbody>`;
+  // Swaps approved before the fix where the shift never actually moved (target chose "any shift")
+  const stuck=swaps.filter(s=>{if(!inScope(s)||s.type!=='swap'||s.admin_status!=='approved'||s.target_req_id)return false;const r=reqs.find(r=>r.id===s.requester_req_id);return r&&r.doctor===s.requester;});
+  let fixH='';
+  if(stuck.length){
+    fixH=`<div style="background:var(--warn-light,#fff4e5);border:1.5px solid #f0b46a;border-radius:var(--radius-lg,10px);padding:12px 14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px">⚠️ ${lang==='he'?'החלפות שאושרו אך לא עודכנו בלוח':'Swaps approved but not applied to the schedule'}</div>
+      ${stuck.map(s=>{const r=reqs.find(r=>r.id===s.requester_req_id);return`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:4px 0;font-size:12px"><span>${escHtml(s.requester)} → ${escHtml(s.target_doctor)} · ${shiftDesc(r)}</span><button class="btn btn-primary btn-sm" onclick="applyStuckSwap(${s.id})">${lang==='he'?'החל עכשיו':'Apply now'}</button></div>`;}).join('')}
+    </div>`;
+  }
+  if(!ready.length){wrap.innerHTML=fixH+`<div class="empty-state" style="padding:16px"><div class="icon">⇄</div>${lang==='he'?'אין בקשות החלפה ממתינות לאישורך':'No swap requests awaiting your approval'}</div>`;return;}
+  let h=fixH+`<table class="req-table"><thead><tr><th>${lang==='he'?'רופא א':'Doctor A'}</th><th>${lang==='he'?'רופא ב':'Doctor B'}</th><th>${lang==='he'?'פרטים':'Details'}</th><th></th></tr></thead><tbody>`;
   ready.forEach(s=>{
     const rA=reqs.find(r=>r.id===s.requester_req_id);const rB=s.target_req_id?reqs.find(r=>r.id===s.target_req_id):null;
     h+=`<tr>
@@ -2777,19 +2790,52 @@ function renderAdminSwaps(){
   });
   wrap.innerHTML=h+'</tbody></table>';
 }
+// Does `doctor` already hold an approved shift at the same date + shift (any clinic), other than the excluded ids?
+function holdsSameShift(doctor,date,st,excludeIds=[]){
+  return reqs.find(o=>o.doctor===doctor&&o.date===date&&sameShift(o.shift_type,st)&&o.status==='approved'&&!excludeIds.includes(o.id));
+}
+// One-way swap (target picked "any shift"): the requester's shift moves to the target doctor.
+async function applyOneWaySwap(s,rA){
+  const tgt=s.target_doctor;const tgtSpec=getDocSpec(tgt)||rA.specialty;
+  await dbUpd('requests',rA.id,{doctor:tgt,specialty:tgtSpec,status:'approved'});
+  rA.doctor=tgt;rA.specialty=tgtSpec;rA.status='approved';
+}
+function refreshAfterSwap(){renderAdminExchange();renderRequests();try{renderStats();}catch(e){}}
 async function approveSwap(swapId){
   const s=swaps.find(s=>s.id===swapId);if(!s)return;
   const rA=reqs.find(r=>r.id===s.requester_req_id);const rB=s.target_req_id?reqs.find(r=>r.id===s.target_req_id):null;
-  if(rA&&rB){
-    const b1=otherClinicReq(rA.doctor,rB.date,rB.shift_type,rB.site,['approved'],[rA.id,rB.id]);
-    const b2=otherClinicReq(rB.doctor,rA.date,rA.shift_type,rA.site,['approved'],[rA.id,rB.id]);
-    if(b1||b2){toast('⛔ '+(lang==='he'?`לאחר ההחלפה ${(b1?rA:rB).doctor} יהיה/תהיה בשתי מרפאות באותה משמרת`:`After the swap ${(b1?rA:rB).doctor} would be in two clinics in the same shift`),4500);return;}
+  if(!rA||(s.target_req_id&&!rB)){toast('⛔ '+(lang==='he'?'אחת המשמרות בהחלפה כבר לא קיימת בלוח. דחה/י את הבקשה.':'One of the shifts in this swap no longer exists. Please reject the request.'),5000);return;}
+  if(rB){
+    const b1=holdsSameShift(rA.doctor,rB.date,rB.shift_type,[rA.id,rB.id]);
+    const b2=holdsSameShift(rB.doctor,rA.date,rA.shift_type,[rA.id,rB.id]);
+    if(b1||b2){toast('⛔ '+(lang==='he'?`לאחר ההחלפה ${(b1?rA:rB).doctor} יהיה/תהיה משובץ/ת פעמיים באותה משמרת`:`After the swap ${(b1?rA:rB).doctor} would be booked twice in the same shift`),4500);return;}
+  }else{
+    const b=holdsSameShift(s.target_doctor,rA.date,rA.shift_type,[rA.id]);
+    if(b){toast('⛔ '+(lang==='he'?`${s.target_doctor} כבר משובץ/ת ב${siteName(b.site)} באותה משמרת`:`${s.target_doctor} is already assigned to ${siteName(b.site)} in that shift`),4500);return;}
   }
   sync(true);try{
-    if(rA&&rB){const[tS,tSh,tD]=[rA.site,rA.shift_type,rA.date];await dbUpd('requests',rA.id,{site:rB.site,shift_type:rB.shift_type,date:rB.date});await dbUpd('requests',rB.id,{site:tS,shift_type:tSh,date:tD});rA.site=rB.site;rA.shift_type=rB.shift_type;rA.date=rB.date;rB.site=tS;rB.shift_type=tSh;rB.date=tD;}
+    if(rB){
+      // Two-way swap: exchange the doctors on the two shifts
+      const dA=rA.doctor,spA=rA.specialty,dB=rB.doctor,spB=rB.specialty;
+      await dbUpd('requests',rA.id,{doctor:dB,specialty:spB});
+      await dbUpd('requests',rB.id,{doctor:dA,specialty:spA});
+      rA.doctor=dB;rA.specialty=spB;rB.doctor=dA;rB.specialty=spA;
+    }else{
+      await applyOneWaySwap(s,rA);
+    }
     await dbUpd('swaps',swapId,{admin_status:'approved',status:'swap_approved'});s.admin_status='approved';s.status='swap_approved';
-    renderAdminExchange();renderRequests();toast(T[lang].swapApproved);
+    refreshAfterSwap();toast(T[lang].swapApproved);
     sendNotifs([s.requester,s.target_doctor].filter(Boolean).map(d=>({doctor:d,he:`✅ ההחלפה אושרה: ${s.requester} ⇄ ${s.target_doctor}. בדוק/י את "המשמרות שלי".`,en:`✅ Swap approved: ${s.requester} ⇄ ${s.target_doctor}. Check "My Shifts".`})));
+  }catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
+}
+async function applyStuckSwap(swapId){
+  const s=swaps.find(s=>s.id===swapId);if(!s)return;
+  const rA=reqs.find(r=>r.id===s.requester_req_id);if(!rA||rA.doctor!==s.requester)return;
+  const b=holdsSameShift(s.target_doctor,rA.date,rA.shift_type,[rA.id]);
+  if(b){toast('⛔ '+(lang==='he'?`${s.target_doctor} כבר משובץ/ת ב${siteName(b.site)} באותה משמרת`:`${s.target_doctor} is already assigned to ${siteName(b.site)} in that shift`),4500);return;}
+  sync(true);try{
+    await applyOneWaySwap(s,rA);refreshAfterSwap();toast(T[lang].swapApproved);
+    sendNotifs([s.requester,s.target_doctor].map(d=>({doctor:d,he:`✅ הלוח עודכן: המשמרת ${shiftDesc(rA)} עברה ל${s.target_doctor}.`,en:`✅ Schedule updated: shift ${shiftDesc(rA)} now belongs to ${s.target_doctor}.`})));
   }catch(e){toast(T[lang].errorPrefix+e.message);}finally{sync(false);}
 }
 async function rejectSwap(swapId){
